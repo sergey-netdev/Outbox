@@ -3,17 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Core", "Outbox.Core\Outbox.Core.csproj", "{484EB061-F7F5-41E4-936E-A8E56D3D51B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Core", "Outbox.Core\Outbox.Core.csproj", "{484EB061-F7F5-41E4-936E-A8E56D3D51B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Tests", "Outbox.Tests\Outbox.Tests.csproj", "{F82C7C19-887C-47C3-A70C-882ED4B0DB04}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Tests", "Outbox.Tests\Outbox.Tests.csproj", "{F82C7C19-887C-47C3-A70C-882ED4B0DB04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Rabbit", "Outbox.Rabbit\Outbox.Rabbit.csproj", "{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Job", "Outbox.Job\Outbox.Job.csproj", "{15490EBE-A879-4469-8BA5-DA0894D4A85A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Job.RabbitMQ", "Outbox.Job.RabbitMQ\Outbox.Job.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{484EB061-F7F5-41E4-936E-A8E56D3D51B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -24,5 +27,23 @@ Global
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87032340-5B23-4773-AA65-024FE313DD48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87032340-5B23-4773-AA65-024FE313DD48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87032340-5B23-4773-AA65-024FE313DD48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87032340-5B23-4773-AA65-024FE313DD48}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7D7E9E96-E4E6-43E3-8B03-F3AC64F07F8F}
 	EndGlobalSection
 EndGlobal
