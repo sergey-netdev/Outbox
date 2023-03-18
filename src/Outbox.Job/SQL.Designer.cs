@@ -61,11 +61,31 @@ namespace Outbox.Job {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to --RR
-        ///
-        ///declare @BatchSize int = 10;
-        ///declare @MaxRetryCount int = 3;
-        ///declare @LockTimeoutInSeconds int = 120;
+        ///   Looks up a localized string similar to insert into dbo.Outbox (
+        ///    MessageId,
+        ///    MessageType,
+        ///    Topic,
+        ///    PartitionId,
+        ///    Payload
+        ///) values (
+        ///    @MessageId,
+        ///    @MessageType,
+        ///    @Topic,
+        ///    @PartitionId,
+        ///    @Payload
+        ///)
+        ///.
+        /// </summary>
+        internal static string Insert {
+            get {
+                return ResourceManager.GetString("Insert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --declare @BatchSize int = 10;
+        ///--declare @MaxRetryCount int = 3;
+        ///--declare @LockTimeoutInSeconds int = 120;
         ///
         ///declare @RowsToProcess table ( -- the definition must be in sync with dbo.Outbox table
         ///    SeqNum bigint not null,
@@ -73,9 +93,9 @@ namespace Outbox.Job {
         ///    MessageType     varchar(512)    not null,
         ///    Topic           varchar(128)    not null,
         ///    PartitionId     varchar(32)     null,
-        ///    RetryCount      tinyint              not null,
+        ///    RetryCount      tinyint         not null,
         ///    LockedAtUtc     datetime2       null,
-        ///  [rest of string was truncated]&quot;;.
+        ///    Gene [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SelectForProcessing {
             get {

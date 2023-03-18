@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using RabbitMQ.Client;
 
-ConnectionFactory factory = new ConnectionFactory { HostName = "localhost" };
+ConnectionFactory factory = new() { HostName = "localhost" };
 
 using IConnection connection = factory.CreateConnection();
 using IModel channel = connection.CreateModel();

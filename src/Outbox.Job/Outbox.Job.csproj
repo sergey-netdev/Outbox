@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Outbox.Core\Outbox.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="SQL.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

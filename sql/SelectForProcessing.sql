@@ -1,5 +1,3 @@
---RR
-
 --declare @BatchSize int = 10;
 --declare @MaxRetryCount int = 3;
 --declare @LockTimeoutInSeconds int = 120;
@@ -10,10 +8,11 @@ declare @RowsToProcess table ( -- the definition must be in sync with dbo.Outbox
     MessageType     varchar(512)    not null,
     Topic           varchar(128)    not null,
     PartitionId     varchar(32)     null,
-    RetryCount      tinyint              not null,
+    RetryCount      tinyint         not null,
     LockedAtUtc     datetime2       null,
     GeneratedAtUtc  datetime2       not null,
     LastErrorAtUtc  datetime2       null,
+    ProcessedAtUtc  datetime2       null,
     Payload         varbinary(max)  null
 );
 
@@ -28,6 +27,7 @@ with CTE as (
         LockedAtUtc,
         GeneratedAtUtc,
         LastErrorAtUtc,
+        ProcessedAtUtc,
         Payload
     from
         dbo.Outbox
@@ -49,6 +49,7 @@ output
     inserted.LockedAtUtc,
     inserted.GeneratedAtUtc,
     inserted.LastErrorAtUtc,
+    inserted.ProcessedAtUtc,
     inserted.Payload
 into
     @RowsToProcess;
@@ -63,16 +64,9 @@ select
     LockedAtUtc,
     GeneratedAtUtc,
     LastErrorAtUtc,
+    ProcessedAtUtc,
     Payload
 from @RowsToProcess;
-
---select top (@BatchSize) * 
---from Outbox 
---where 
---    ProcessedAtUtc is null
---        and (LockedAtUtc is null or (LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) > @LockTimeoutInSeconds))
---        and (RetryCount <= @MaxRetryCount)
---order by SeqNum desc
 
 /*
 insert into dbo.Outbox (
