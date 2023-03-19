@@ -1,6 +1,9 @@
 ﻿namespace Outbox.Job;
+
+using MassTransit;
 using Microsoft.Data.SqlClient;
 using Outbox.Core;
+using System.Threading;
 
 public class OutboxRepository : IOutboxRepository
 {
@@ -11,7 +14,7 @@ public class OutboxRepository : IOutboxRepository
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<IReadOnlyCollection<IOutboxMessage>> GetNextBatchAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<IOutboxMessage>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default)
     {
         using SqlConnection connection = new(_options.SqlConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -29,6 +32,11 @@ public class OutboxRepository : IOutboxRepository
         }
 
         return result;
+    }
+
+    public Task UnlockAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<IReadOnlyDictionary<string, long>> PutBatchAsync(IReadOnlyCollection<IOutboxMessage> batch, CancellationToken cancellationToken = default)
@@ -49,11 +57,24 @@ public class OutboxRepository : IOutboxRepository
             command.Parameters.AddWithValue("@Topic", entry.Topic);
             command.Parameters.AddWithValue("@PartitionId", entry.PartitionId);
             command.Parameters.AddWithValue("@Payload", entry.Payload);
+
             long seqNum = (long)(await command.ExecuteScalarAsync(cancellationToken));
             keys.Add(entry.MessageId, seqNum);
         }
 
         return keys;
+    }
+
+    /// <summary>
+    /// For testing only. Truncates the storage table.
+    /// </summary>
+    internal async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        using SqlConnection connection = new(_options.SqlConnectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        using SqlCommand command = new(SQL.Truncate, connection);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static IOutboxMessage ReadRow(SqlDataReader reader)

@@ -9,25 +9,38 @@ using System.Text.Unicode;
 
 public class OutboxRepositoryTests
 {
-    private readonly IOutboxRepository _repository;
+    private readonly OutboxRepository _repository;
+    private readonly OutboxOptions outbox = new();
 
     public OutboxRepositoryTests()
     {
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
+        configuration.GetSection(OutboxOptions.DefaultSectionName).Bind(outbox);
 
-        OutboxOptions outboxOptions = new();
-        configuration.GetSection(OutboxOptions.DefaultSectionName).Bind(outboxOptions);
-
-        _repository = new OutboxRepository(outboxOptions);
+        _repository = new OutboxRepository(outbox);
     }
 
     [Fact]
-    public async Task GetNextBatchAsync_Returns_Specified_Number_Of_Message_Rows()
+    public async Task LockAndGetNextBatchAsync_Returns_Specified_Number_Of_Message_Rows()
     {
-        IReadOnlyCollection<IOutboxMessage> batch = await _repository.GetNextBatchAsync();
-        Assert.NotEmpty(batch);
+        IReadOnlyCollection<IOutboxMessage> batch = await _repository.LockAndGetNextBatchAsync();
+        Assert.NotNull(batch);
+        Assert.Equal(outbox.QueryBatchSize, batch.Count);
+        Assert.Equal(batch.Count, batch.Select(x => x.MessageId).Distinct().Count());
+
+        foreach (IOutboxMessage m in batch)
+        {
+            Assert.Equal(0, m.RetryCount);
+            Assert.Null(m.PartitionId);
+            Assert.NotNull(m.MessageId);
+            Assert.NotNull(m.MessageType);
+            Assert.True(DateTimeOffset.UtcNow > m.GeneratedAtUtc);
+            Assert.Null(m.LastErrorAtUtc);
+            Assert.Null(m.LockedAtUtc);
+            Assert.Null(m.ProcessedAtUtc);
+        }
     }
 
     [Fact]
@@ -35,9 +48,26 @@ public class OutboxRepositoryTests
     {
         const int batchSize = 10;
 
-        List<OutboxMessage> batch = Enumerable.Range(0, batchSize).Select(x =>
+        List<OutboxMessage> batch = GenerateRndMessages(batchSize);
+
+        IReadOnlyDictionary<string, long> keys = await _repository.PutBatchAsync(batch);
+        Assert.NotNull(keys);
+        Assert.Equal(batchSize, keys.Count);
+        Assert.Equal(batchSize, keys.Values.Distinct().Count());
+        Assert.Equal(batch.Select(x => x.MessageId), keys.Keys);
+    }
+
+    private async Task SetupAsync()
+    {
+        await _repository.ClearAsync();
+    }
+
+    private List<OutboxMessage> GenerateRndMessages(int batchSize)
+    {
+        List<OutboxMessage> messages = Enumerable.Range(0, batchSize).Select(x =>
         {
-            var message = new {
+            var message = new
+            {
                 Id = Guid.NewGuid().ToString().ToLower(),
                 Type = "test-message-type"
             };
@@ -51,10 +81,6 @@ public class OutboxRepositoryTests
         })
         .ToList();
 
-        IReadOnlyDictionary<string, long> keys = await _repository.PutBatchAsync(batch);
-        Assert.NotNull(keys);
-        Assert.Equal(batchSize, keys.Count);
-        Assert.Equal(batchSize, keys.Values.Distinct().Count());
-        Assert.Equal(batch.Select(x => x.MessageId), keys.Keys);
+        return messages;
     }
 }

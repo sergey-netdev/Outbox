@@ -22,3 +22,4 @@ if not exists (select * from sysobjects where name='Outbox' and xtype='u')
         constraint [CC_dbo.Outbox_ProcessedAtUtc]       check (ProcessedAtUtc is null or ProcessedAtUtc > GeneratedAtUtc),
         constraint [CC_dbo.Outbox_LastErrorAtUtc]       check (LastErrorAtUtc is null or LastErrorAtUtc > GeneratedAtUtc),
    );
+-- select * from dbo.Outbox

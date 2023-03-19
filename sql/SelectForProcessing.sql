@@ -33,7 +33,7 @@ with CTE as (
         dbo.Outbox
     where 
         ProcessedAtUtc is null
-            and (LockedAtUtc is null or (LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) > @LockTimeoutInSeconds))
+            and (LockedAtUtc is null) -- or (LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) > @LockTimeoutInSeconds))
             and (RetryCount <= @MaxRetryCount)
     order by
         SeqNum asc -- we want FIFO

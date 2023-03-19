@@ -61,6 +61,23 @@ namespace Outbox.Job {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to with CTE as (
+        ///    select top (@BatchSize) *
+        ///    from dbo.Outbox
+        ///    where
+        ///        ProcessedAtUtc is not null or RetryCount &lt;= @MaxRetryCount
+        ///    order by SeqNum
+        ///)
+        ///delete from CTE
+        ///.
+        /// </summary>
+        internal static string Delete {
+            get {
+                return ResourceManager.GetString("Delete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to insert into dbo.Outbox (
         ///    MessageId,
         ///    MessageType,
@@ -73,7 +90,9 @@ namespace Outbox.Job {
         ///    @Topic,
         ///    @PartitionId,
         ///    @Payload
-        ///)
+        ///);
+        ///
+        ///select CONVERT(bigint, SCOPE_IDENTITY());
         ///.
         /// </summary>
         internal static string Insert {
@@ -100,6 +119,33 @@ namespace Outbox.Job {
         internal static string SelectForProcessing {
             get {
                 return ResourceManager.GetString("SelectForProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to truncate table dbo.Outbox;
+        ///.
+        /// </summary>
+        internal static string Truncate {
+            get {
+                return ResourceManager.GetString("Truncate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to with CTE as (
+        ///    select top (@BatchSize) *
+        ///    from dbo.Outbox
+        ///    where
+        ///        LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) &gt; @LockTimeoutInSeconds
+        ///    order by SeqNum
+        ///)
+        ///update CTE set LockedAtUtc = null
+        ///.
+        /// </summary>
+        internal static string Unlock {
+            get {
+                return ResourceManager.GetString("Unlock", resourceCulture);
             }
         }
     }
