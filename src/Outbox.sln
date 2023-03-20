@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Sql", "Outbox.Sql\Ou
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Job.RabbitMQ", "Outbox.Job.RabbitMQ\Outbox.Job.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Service", "Outbox.Service\Outbox.Service.csproj", "{752BA559-10A0-4A33-B155-DBF93D66C880}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{87032340-5B23-4773-AA65-024FE313DD48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87032340-5B23-4773-AA65-024FE313DD48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87032340-5B23-4773-AA65-024FE313DD48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{752BA559-10A0-4A33-B155-DBF93D66C880}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{752BA559-10A0-4A33-B155-DBF93D66C880}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{752BA559-10A0-4A33-B155-DBF93D66C880}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{752BA559-10A0-4A33-B155-DBF93D66C880}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

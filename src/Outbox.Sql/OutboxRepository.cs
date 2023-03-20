@@ -1,30 +1,29 @@
 ﻿namespace Outbox.Sql;
-
 using Microsoft.Data.SqlClient;
 using Outbox.Core;
 using System.Threading;
 
 public class OutboxRepository : IOutboxRepository
 {
-    private readonly OutboxOptions _options;
+    private readonly OutboxRepositoryOptions _options;
 
-    public OutboxRepository(OutboxOptions options)
+    public OutboxRepository(OutboxRepositoryOptions options)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<IReadOnlyCollection<IOutboxMessageRow>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<IOutboxMessageRow>> LockAndGetNextBatchAsync(int batchSize, CancellationToken cancellationToken = default)
     {
         using SqlConnection connection = new(_options.SqlConnectionString);
         await connection.OpenAsync(cancellationToken);
 
         using SqlCommand command = new(SQL.SelectForProcessing, connection);
-        command.Parameters.AddWithValue("@BatchSize", _options.QueryBatchSize);
+        command.Parameters.AddWithValue("@BatchSize", batchSize);
         command.Parameters.AddWithValue("@MaxRetryCount", _options.MaxRetryCount);
         command.Parameters.AddWithValue("@LockTimeoutInSeconds", (int)_options.LockTimeout.TotalSeconds);
 
         using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-        List<IOutboxMessageRow> result = new(_options.QueryBatchSize); // allocate in advance as it's likely we'll have full batches every time under high load
+        List<IOutboxMessageRow> result = new(batchSize); // allocate in advance as it's likely we'll have full batches every time under high load
         while (await reader.ReadAsync(cancellationToken))
         {
             result.Add(ReadRow(reader));
@@ -33,7 +32,7 @@ public class OutboxRepository : IOutboxRepository
         return result;
     }
 
-    public Task UnlockAsync(CancellationToken cancellationToken = default)
+    public Task UnlockAsync(int batchSize, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

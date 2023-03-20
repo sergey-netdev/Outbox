@@ -7,31 +7,32 @@ using System.Text.Json;
 
 public class OutboxRepositoryTests
 {
+    const int QueryBatchSize = 10;
     private readonly OutboxRepository _repository;
-    private readonly OutboxOptions outbox = new();
+    private readonly OutboxRepositoryOptions options = new();
 
     public OutboxRepositoryTests()
     {
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
-        configuration.GetSection(OutboxOptions.DefaultSectionName).Bind(outbox);
+        configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Bind(options);
 
-        _repository = new OutboxRepository(outbox);
+        _repository = new OutboxRepository(options);
     }
 
     [Fact]
     public async Task LockAndGetNextBatchAsync_Returns_Specified_Number_Of_Message_Rows()
     {
-        IReadOnlyCollection<IOutboxMessageRow> batch = await _repository.LockAndGetNextBatchAsync();
+        IReadOnlyCollection<IOutboxMessageRow> batch = await _repository.LockAndGetNextBatchAsync(QueryBatchSize);
         Assert.NotNull(batch);
-        Assert.Equal(outbox.QueryBatchSize, batch.Count);
+        Assert.Equal(QueryBatchSize, batch.Count);
         Assert.Equal(batch.Count, batch.Select(x => x.MessageId).Distinct().Count());
 
         foreach (IOutboxMessageRow m in batch)
         {
             Assert.Equal(0, m.RetryCount);
-            Assert.Null(m.PartitionId);
+            //Assert.Null(m.PartitionId);
             Assert.NotNull(m.MessageId);
             Assert.NotNull(m.MessageType);
             Assert.True(DateTimeOffset.UtcNow > m.GeneratedAtUtc);

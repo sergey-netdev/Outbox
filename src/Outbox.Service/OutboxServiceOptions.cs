@@ -1,14 +1,15 @@
-﻿namespace Outbox.Sql;
-using Outbox.Core;
+﻿namespace Outbox.Service;
 
-public class OutboxOptions
+public class OutboxServiceOptions
 {
     public const string DefaultSectionName = "Outbox";
 
     /// <summary>
-    /// Sql Server connection string.
+    /// A maximum number of attempts to send a message to the broker.
+    /// See <see cref="IOutboxMessageRow.RetryCount"/> and <see cref="IOutboxMessageRow.LastErrorAtUtc"/>.
     /// </summary>
-    public string? SqlConnectionString { get; set; }
+    /// <example>When set to 3, 4 attempts in total will be made to send a message.</example>
+    public byte MaxRetryCount { get; set; }
 
     /// <summary>
     /// How many rows to query for processing in a single go.
@@ -26,13 +27,6 @@ public class OutboxOptions
     /// This is to control pressure to the transaction log.
     /// </summary>
     public int DeleteBatchSize { get; set; }
-
-    /// <summary>
-    /// A maximum number of attempts to send a message to the broker.
-    /// See <see cref="IOutboxMessageRow.RetryCount"/> and <see cref="IOutboxMessageRow.LastErrorAtUtc"/>.
-    /// </summary>
-    /// <example>When set to 3, 4 attempts in total will be made to send a message.</example>
-    public byte MaxRetryCount { get; set; }
 
     /// <summary>
     /// Message lock duration.

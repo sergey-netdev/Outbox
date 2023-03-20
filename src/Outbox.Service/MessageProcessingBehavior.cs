@@ -1,4 +1,4 @@
-﻿namespace Outbox.Sql;
+﻿namespace Outbox.Service;
 
 /// <summary>
 /// Defines behavior of messages after successful processing
