@@ -1,6 +1,5 @@
-﻿namespace Outbox.Job;
+﻿namespace Outbox.Sql;
 
-using MassTransit;
 using Microsoft.Data.SqlClient;
 using Outbox.Core;
 using System.Threading;

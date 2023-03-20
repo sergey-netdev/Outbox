@@ -1,4 +1,4 @@
-﻿namespace Outbox.Job;
+﻿namespace Outbox.Sql;
 
 public class OutboxOptions
 {
@@ -7,6 +7,6 @@ public class OutboxOptions
     public string? SqlConnectionString { get; set; }
 
     public int QueryBatchSize { get; set; }
-    public byte MaxRetryCount { get; set; }
+    public byte? MaxRetryCount { get; set; }
     public int LockTimeoutInSeconds { get; set; }
 }

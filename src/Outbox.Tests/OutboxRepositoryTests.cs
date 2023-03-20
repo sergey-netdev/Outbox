@@ -1,7 +1,7 @@
 ﻿namespace Outbox.Tests;
 using Microsoft.Extensions.Configuration;
 using Outbox.Core;
-using Outbox.Job;
+using Outbox.Sql;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;

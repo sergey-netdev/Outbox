@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Outbox.Job {
+namespace Outbox.Sql {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Outbox.Job {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Outbox.Job.SQL", typeof(SQL).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Outbox.Sql.SQL", typeof(SQL).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

@@ -1,6 +1,5 @@
-﻿namespace Outbox.Job;
+﻿namespace Outbox.Sql;
 
-using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -12,12 +11,6 @@ internal sealed class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddHostedService<ConsoleHostedService>();
-                services.AddMassTransit(x =>
-                {
-                    x.UsingRabbitMq((IBusRegistrationContext ctx, IRabbitMqBusFactoryConfigurator cfg) =>
-                    {
-                    });
-                });
             });
 
         await builder.RunConsoleAsync();

@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Outbox.Job\Outbox.Job.csproj" />
+    <ProjectReference Include="..\Outbox.Job\Outbox.Sql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
