@@ -1,0 +1,22 @@
+﻿namespace Outbox.Sql;
+using Outbox.Core;
+
+public sealed class OutboxMessageRow : OutboxMessage, IOutboxMessageRow
+{
+    public OutboxMessageRow(string messageId, string messageType, string topic, byte[] payload)
+        :base(messageId, messageType, topic, payload)
+    {
+    }
+
+    public long SeqNum { get; set; }
+
+    public byte RetryCount { get; set; }
+
+    public DateTimeOffset GeneratedAtUtc { get; set; }
+
+    public DateTimeOffset? ProcessedAtUtc { get; set; }
+
+    public DateTimeOffset? LockedAtUtc { get; set; }
+
+    public DateTimeOffset? LastErrorAtUtc { get; set; }
+}

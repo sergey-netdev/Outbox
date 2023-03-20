@@ -1,18 +1,13 @@
 ﻿namespace Outbox.Core;
 
+/// <summary>
+/// Represents a message to be published.
+/// </summary>
 public interface IOutboxMessage
 {
-    long SeqNum { get; }
     string MessageId { get; }
     string MessageType { get; }
-
     string Topic { get; }
-    string PartitionId { get; }
-    byte RetryCount { get; }
-
-    DateTimeOffset GeneratedAtUtc { get; }
-    DateTimeOffset? ProcessedAtUtc { get; }
-    DateTimeOffset? LockedAtUtc { get; }
-    DateTimeOffset? LastErrorAtUtc { get; }
+    string? PartitionId { get; }
     byte[] Payload { get; }
 }

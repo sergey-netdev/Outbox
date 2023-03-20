@@ -13,7 +13,7 @@ public class OutboxRepository : IOutboxRepository
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<IReadOnlyCollection<IOutboxMessage>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<IOutboxMessageRow>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default)
     {
         using SqlConnection connection = new(_options.SqlConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -21,10 +21,10 @@ public class OutboxRepository : IOutboxRepository
         using SqlCommand command = new(SQL.SelectForProcessing, connection);
         command.Parameters.AddWithValue("@BatchSize", _options.QueryBatchSize);
         command.Parameters.AddWithValue("@MaxRetryCount", _options.MaxRetryCount);
-        command.Parameters.AddWithValue("@LockTimeoutInSeconds", _options.LockTimeoutInSeconds);
+        command.Parameters.AddWithValue("@LockTimeoutInSeconds", (int)_options.LockTimeout.TotalSeconds);
 
         using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-        List<IOutboxMessage> result = new(_options.QueryBatchSize); // allocate in advance as it's likely we'll have full batches every time under high load
+        List<IOutboxMessageRow> result = new(_options.QueryBatchSize); // allocate in advance as it's likely we'll have full batches every time under high load
         while (await reader.ReadAsync(cancellationToken))
         {
             result.Add(ReadRow(reader));
@@ -48,17 +48,17 @@ public class OutboxRepository : IOutboxRepository
 
         Dictionary<string, long> keys = new(capacity: batch.Count);
 
-        foreach (IOutboxMessage entry in batch)
+        foreach (IOutboxMessage m in batch)
         {
             using SqlCommand command = new(SQL.Insert, connection);
-            command.Parameters.AddWithValue("@MessageId", entry.MessageId);
-            command.Parameters.AddWithValue("@MessageType", entry.MessageType);
-            command.Parameters.AddWithValue("@Topic", entry.Topic);
-            command.Parameters.AddWithValue("@PartitionId", entry.PartitionId);
-            command.Parameters.AddWithValue("@Payload", entry.Payload);
+            command.Parameters.AddWithValue("@MessageId", m.MessageId);
+            command.Parameters.AddWithValue("@MessageType", m.MessageType);
+            command.Parameters.AddWithValue("@Topic", m.Topic);
+            command.Parameters.AddWithValue("@PartitionId", m.PartitionId);
+            command.Parameters.AddWithValue("@Payload", m.Payload);
 
             long seqNum = (long)(await command.ExecuteScalarAsync(cancellationToken));
-            keys.Add(entry.MessageId, seqNum);
+            keys.Add(m.MessageId, seqNum);
         }
 
         return keys;
@@ -76,16 +76,16 @@ public class OutboxRepository : IOutboxRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static IOutboxMessage ReadRow(SqlDataReader reader)
+    private static IOutboxMessageRow ReadRow(SqlDataReader reader)
     {
-        OutboxMessage result = new(
+        OutboxMessageRow result = new(
             messageId: (string)reader["MessageId"],
             messageType: (string)reader["MessageType"],
             topic: (string)reader["Topic"],
-            partitionId: (string)reader["PartitionId"],
             payload: (byte[])reader["Payload"])
         {
             SeqNum = (long)reader["SeqNum"],
+            PartitionId = (string)reader["PartitionId"],
             RetryCount = (byte)reader["RetryCount"],
             GeneratedAtUtc = reader.GetFieldValue<DateTime>(reader.GetOrdinal("GeneratedAtUtc")).ToUniversalTime(),
             LockedAtUtc = GetNullable<DateTime>("LockedAtUtc")?.ToUniversalTime(),

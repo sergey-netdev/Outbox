@@ -1,7 +1,7 @@
-﻿namespace Outbox.Sql;
+﻿namespace Outbox.Tests;
 using Outbox.Core;
 
-public class OutboxMessage : IOutboxMessage
+internal class OutboxMessage : IOutboxMessage
 {
     public OutboxMessage(string messageId, string messageType, string topic, byte[] payload)
     {

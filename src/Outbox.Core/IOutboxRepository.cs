@@ -2,7 +2,7 @@
 
 public interface IOutboxRepository
 {
-    Task<IReadOnlyCollection<IOutboxMessage>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<IOutboxMessageRow>> LockAndGetNextBatchAsync(CancellationToken cancellationToken = default);
 
     Task UnlockAsync(CancellationToken cancellationToken = default);
 

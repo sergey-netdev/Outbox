@@ -2,10 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Outbox.Core;
 using Outbox.Sql;
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using System.Text.Unicode;
 
 public class OutboxRepositoryTests
 {
@@ -25,12 +23,12 @@ public class OutboxRepositoryTests
     [Fact]
     public async Task LockAndGetNextBatchAsync_Returns_Specified_Number_Of_Message_Rows()
     {
-        IReadOnlyCollection<IOutboxMessage> batch = await _repository.LockAndGetNextBatchAsync();
+        IReadOnlyCollection<IOutboxMessageRow> batch = await _repository.LockAndGetNextBatchAsync();
         Assert.NotNull(batch);
         Assert.Equal(outbox.QueryBatchSize, batch.Count);
         Assert.Equal(batch.Count, batch.Select(x => x.MessageId).Distinct().Count());
 
-        foreach (IOutboxMessage m in batch)
+        foreach (IOutboxMessageRow m in batch)
         {
             Assert.Equal(0, m.RetryCount);
             Assert.Null(m.PartitionId);
@@ -73,11 +71,13 @@ public class OutboxRepositoryTests
             };
 
             return new OutboxMessage(
-            messageId: message.Id,
-            messageType: message.Type,
-            topic: nameof(PutBatchAsync_Inserts_Message_Rows),
-            partitionId: $"partition-{x}",
-            payload: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)));
+                messageId: message.Id,
+                messageType: message.Type,
+                topic: nameof(PutBatchAsync_Inserts_Message_Rows),
+                payload: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)))
+            {
+                PartitionId = $"partition-{x}",
+            };
         })
         .ToList();
 
