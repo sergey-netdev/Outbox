@@ -19,6 +19,11 @@ public class OutboxService : IOutboxService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    public async Task ExecuteAsync(CancellationToken stoppingToken = default)
+    {
+        _logger.LogInformation("Doing something");
+    }
+
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         while (!cancellationToken.IsCancellationRequested)
