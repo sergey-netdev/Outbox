@@ -1,5 +1,5 @@
-declare @SeqNum bigint = 8;
-declare @Move bit = 1;
+--declare @SeqNum bigint = 8;
+--declare @Move bit = 1;
 --declare @MaxRetryCount tinyint = 2;
 --declare @RetryCount tinyint;
 -- select * from dbo.Outbox

@@ -136,6 +136,29 @@ namespace Outbox.Sql {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to select
+        ///    SeqNum,
+        ///    MessageId,
+        ///    MessageType,
+        ///    Topic,
+        ///    PartitionId,
+        ///    RetryCount,
+        ///    LockedAtUtc,
+        ///    GeneratedAtUtc,
+        ///    LastErrorAtUtc,
+        ///    ProcessedAtUtc,
+        ///    Payload
+        ///from dbo.Outbox
+        ///where SeqNum = @SeqNum;
+        ///.
+        /// </summary>
+        internal static string Select {
+            get {
+                return ResourceManager.GetString("Select", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to --declare @BatchSize int = 10;
         ///--declare @MaxRetryCount int = 3;
         ///--declare @LockTimeoutInSeconds int = 120;
@@ -153,6 +176,29 @@ namespace Outbox.Sql {
         internal static string SelectForProcessing {
             get {
                 return ResourceManager.GetString("SelectForProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to select
+        ///    SeqNum,
+        ///    MessageId,
+        ///    MessageType,
+        ///    Topic,
+        ///    PartitionId,
+        ///    RetryCount,
+        ///    LockedAtUtc,
+        ///    GeneratedAtUtc,
+        ///    LastErrorAtUtc,
+        ///    ProcessedAtUtc,
+        ///    Payload
+        ///from dbo.OutboxProcessed
+        ///where SeqNum = @SeqNum;
+        ///.
+        /// </summary>
+        internal static string SelectProcessed {
+            get {
+                return ResourceManager.GetString("SelectProcessed", resourceCulture);
             }
         }
         

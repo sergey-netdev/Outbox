@@ -88,7 +88,7 @@ public class OutboxRepository : IOutboxRepository
     }
 
     /// <summary>
-    /// For testing only. Truncates the storage table.
+    /// For testing only. Truncates the storage tables.
     /// </summary>
     internal async Task ClearAsync(CancellationToken cancellationToken = default)
     {
@@ -122,6 +122,29 @@ public class OutboxRepository : IOutboxRepository
         return seqNum;
     }
 
+    internal Task<IOutboxMessageRow?> SelectAsync(long seqNum, CancellationToken cancellationToken = default) =>
+        this.SelectAsync(SQL.Select, seqNum, cancellationToken);
+
+    internal Task<IOutboxMessageRow?> SelectProcessedAsync(long seqNum, CancellationToken cancellationToken = default) =>
+        this.SelectAsync(SQL.SelectProcessed, seqNum, cancellationToken);
+
+    private async Task<IOutboxMessageRow?> SelectAsync(string query, long seqNum, CancellationToken cancellationToken = default)
+    {
+        using SqlConnection connection = new(_options.SqlConnectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        using SqlCommand command = new(query, connection);
+        command.Parameters.AddWithValue("@SeqNum", seqNum);
+
+        using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (await reader.ReadAsync(cancellationToken))
+        { 
+            return ReadRow(reader);
+        }
+
+        return null;
+    }
+
     private static IOutboxMessageRow ReadRow(SqlDataReader reader)
     {
         OutboxMessageRow result = new(
@@ -133,10 +156,10 @@ public class OutboxRepository : IOutboxRepository
             SeqNum = (long)reader["SeqNum"],
             PartitionId = (string)reader["PartitionId"],
             RetryCount = (byte)reader["RetryCount"],
-            GeneratedAtUtc = reader.GetFieldValue<DateTime>(reader.GetOrdinal("GeneratedAtUtc")).ToUniversalTime(),
-            LockedAtUtc = GetNullable<DateTime>("LockedAtUtc")?.ToUniversalTime(),
-            ProcessedAtUtc = GetNullable<DateTime>("ProcessedAtUtc")?.ToUniversalTime(),
-            LastErrorAtUtc = GetNullable<DateTime>("LastErrorAtUtc")?.ToUniversalTime(),
+            GeneratedAtUtc = reader.GetFieldValue<DateTime>(reader.GetOrdinal("GeneratedAtUtc")),
+            LockedAtUtc = GetNullable<DateTime>("LockedAtUtc"),
+            ProcessedAtUtc = GetNullable<DateTime>("ProcessedAtUtc"),
+            LastErrorAtUtc = GetNullable<DateTime>("LastErrorAtUtc"),
         };
 
         return result;
@@ -144,7 +167,7 @@ public class OutboxRepository : IOutboxRepository
         T? GetNullable<T>(string name) where T : struct
         {
             int indx = reader.GetOrdinal(name);
-            return reader.IsDBNull(indx) ? default(T) : (T)reader[indx];
+            return reader.IsDBNull(indx) ? null : (T)reader[indx];
         }
     }
 }

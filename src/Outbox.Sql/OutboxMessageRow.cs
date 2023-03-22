@@ -12,11 +12,11 @@ public sealed class OutboxMessageRow : OutboxMessage, IOutboxMessageRow
 
     public byte RetryCount { get; set; }
 
-    public DateTimeOffset GeneratedAtUtc { get; set; }
+    public DateTime GeneratedAtUtc { get; set; }
 
-    public DateTimeOffset? ProcessedAtUtc { get; set; }
+    public DateTime? ProcessedAtUtc { get; set; }
 
-    public DateTimeOffset? LockedAtUtc { get; set; }
+    public DateTime? LockedAtUtc { get; set; }
 
-    public DateTimeOffset? LastErrorAtUtc { get; set; }
+    public DateTime? LastErrorAtUtc { get; set; }
 }

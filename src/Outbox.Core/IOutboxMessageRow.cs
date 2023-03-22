@@ -7,8 +7,8 @@ public interface IOutboxMessageRow : IOutboxMessage
 {
     long SeqNum { get; }
     byte RetryCount { get; }
-    DateTimeOffset GeneratedAtUtc { get; }
-    DateTimeOffset? ProcessedAtUtc { get; }
-    DateTimeOffset? LockedAtUtc { get; }
-    DateTimeOffset? LastErrorAtUtc { get; }
+    DateTime GeneratedAtUtc { get; }
+    DateTime? ProcessedAtUtc { get; }
+    DateTime? LockedAtUtc { get; }
+    DateTime? LastErrorAtUtc { get; }
 }
