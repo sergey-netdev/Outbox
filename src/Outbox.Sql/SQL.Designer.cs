@@ -95,9 +95,43 @@ namespace Outbox.Sql {
         ///select CONVERT(bigint, SCOPE_IDENTITY());
         ///.
         /// </summary>
-        internal static string Insert {
+        internal static string InsertDefault {
             get {
-                return ResourceManager.GetString("Insert", resourceCulture);
+                return ResourceManager.GetString("InsertDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to insert into dbo.Outbox (
+        ///    MessageId,
+        ///    MessageType,
+        ///    Topic,
+        ///    PartitionId,
+        ///    Payload,
+        ///    RetryCount,
+        ///    LockedAtUtc,
+        ///    GeneratedAtUtc,
+        ///    LastErrorAtUtc,
+        ///    ProcessedAtUtc
+        ///) values (
+        ///    @MessageId,
+        ///    @MessageType,
+        ///    @Topic,
+        ///    @PartitionId,
+        ///    @Payload,
+        ///    @RetryCount,
+        ///    @LockedAtUtc,
+        ///    @GeneratedAtUtc,
+        ///    @LastErrorAtUtc,
+        ///    @ProcessedAtUtc
+        ///);
+        ///
+        ///select CONVERT(bigint, SCOPE_IDENTITY());
+        ///.
+        /// </summary>
+        internal static string InsertRaw {
+            get {
+                return ResourceManager.GetString("InsertRaw", resourceCulture);
             }
         }
         
@@ -146,6 +180,64 @@ namespace Outbox.Sql {
         internal static string Unlock {
             get {
                 return ResourceManager.GetString("Unlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to declare @SeqNum bigint = 8;
+        ///declare @Move bit = 1;
+        ///--declare @MaxRetryCount tinyint = 2;
+        ///--declare @RetryCount tinyint;
+        ///-- select * from dbo.Outbox
+        ///-- select * from dbo.OutboxProcessed
+        ///--update dbo.Outbox set RetryCount = 2 where SeqNum=9
+        ///
+        ///begin tran;
+        ///
+        ///if @Move = 1
+        ///begin
+        ///    insert into dbo.OutboxProcessed (
+        ///            SeqNum,
+        ///            MessageId,
+        ///            MessageType,
+        ///            Topic,
+        ///            PartitionId,
+        ///            RetryCount,
+        ///            LockedAtUtc,
+        ///            Generated [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string UpdateSuccessful {
+            get {
+                return ResourceManager.GetString("UpdateSuccessful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --declare @SeqNum bigint = 9;
+        ///--declare @MaxRetryCount tinyint = 2;
+        ///--declare @RetryCount tinyint;
+        ///-- select * from dbo.Outbox
+        ///-- select * from dbo.OutboxProcessed
+        ///--update dbo.Outbox set RetryCount = 2 where SeqNum=9
+        ///
+        ///begin tran
+        ///
+        ///declare @RetryCount tinyint;
+        ///update dbo.Outbox set
+        ///    LastErrorAtUtc = GETUTCDATE(),
+        ///    RetryCount = RetryCount + 1,
+        ///    @RetryCount = RetryCount + 1
+        ///where SeqNum = @SeqNum;
+        ///
+        ///if @RetryCount &gt; @MaxRetryCount
+        ///begin
+        ///
+        ///insert into dbo.OutboxProcessed (
+        ///        Seq [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string UpdateUnsuccessful {
+            get {
+                return ResourceManager.GetString("UpdateUnsuccessful", resourceCulture);
             }
         }
     }

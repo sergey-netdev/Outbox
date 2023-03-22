@@ -121,8 +121,11 @@
   <data name="SelectForProcessing" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\sql\SelectForProcessing.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="Insert" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\sql\Insert.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="InsertDefault" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\sql\InsertDefault.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="InsertRaw" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\sql\InsertRaw.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
   <data name="Truncate" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\sql\Truncate.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
@@ -132,5 +135,11 @@
   </data>
   <data name="Unlock" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\sql\Unlock.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="UpdateSuccessful" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\sql\UpdateSuccessful.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="UpdateUnsuccessful" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\sql\UpdateUnsuccessful.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>
