@@ -61,7 +61,6 @@ public class OutboxRepositoryTests : IAsyncLifetime
             Assert.NotNull(rows);
             Assert.Equal(expectedRows, rows.Count);
             Assert.Equal(rows.Count, rows.Select(x => x.MessageId).Distinct().Count());
-
             foreach (IOutboxMessageRow row in rows)
             {
                 Assert.Equal(0, row.RetryCount);
@@ -79,8 +78,10 @@ public class OutboxRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task PutBatchAsync_Inserts_Message_Rows()
     {
+        // setup
         IReadOnlyDictionary<string, OutboxMessage> batch = GenerateRndMessages(QueryBatchSize).ToDictionary(x => x.MessageId, x => x);
 
+        // act
         IReadOnlyDictionary<string, long> keys = await _repository.PutBatchAsync(batch.Values.ToArray());
 
         // verify
@@ -88,8 +89,6 @@ public class OutboxRepositoryTests : IAsyncLifetime
         Assert.Equal(QueryBatchSize, keys.Count);
         Assert.Equal(QueryBatchSize, keys.Values.Distinct().Count());
         Assert.Equal(batch.Select(x => x.Key), keys.Keys);
-
-        // verify every message
         foreach (KeyValuePair<string, long> key in keys)
         {
             IOutboxMessageRow? row = await _repository.SelectAsync(seqNum: key.Value);
@@ -100,17 +99,46 @@ public class OutboxRepositoryTests : IAsyncLifetime
         }
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task UpdateMessageAsSuccessfulAsync_Deletes_Or_Moves_A_Message(bool move)
+    [Fact]
+    public async Task UpdateMessageAsSuccessfulAsync_Deletes_A_Message()
     {
+        // setup
         OutboxMessage message = GenerateRndMessage();
         long seqNum = (await _repository.PutBatchAsync(new[] { message })).Single().Value;
 
-        await _repository.SelectAsync(seqNum);
+        IOutboxMessageRow? messageRow = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow);
+        Assert.Null(messageRow.ProcessedAtUtc);
+        Assert.Null(await _repository.SelectProcessedAsync(seqNum));
 
-        await _repository.UpdateMessageAsSuccessfulAsync(seqNum, move);
+        // act
+        await _repository.UpdateMessageAsSuccessfulAsync(seqNum, move: false);
+
+        // verify
+        Assert.Null(await _repository.SelectAsync(seqNum));
+        Assert.Null(await _repository.SelectProcessedAsync(seqNum));
+    }
+
+    [Fact]
+    public async Task UpdateMessageAsSuccessfulAsync_Moves_A_Message()
+    {
+        // setup
+        OutboxMessage message = GenerateRndMessage();
+        long seqNum = (await _repository.PutBatchAsync(new[] { message })).Single().Value;
+
+        IOutboxMessageRow? messageRow = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow);
+        Assert.Null(messageRow.ProcessedAtUtc);
+        Assert.Null(await _repository.SelectProcessedAsync(seqNum));
+
+        // act
+        await _repository.UpdateMessageAsSuccessfulAsync(seqNum, move: true);
+
+        // verify
+        Assert.Null(await _repository.SelectAsync(seqNum));
+        IOutboxMessageRow? processedMessageRow = await _repository.SelectProcessedAsync(seqNum);
+        Assert.NotNull(processedMessageRow);
+        Assert.NotNull(processedMessageRow.ProcessedAtUtc);
     }
 
     private static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
