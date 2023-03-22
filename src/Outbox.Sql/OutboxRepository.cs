@@ -12,6 +12,8 @@ public class OutboxRepository : IOutboxRepository
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
+    internal OutboxRepositoryOptions Options => _options;
+
     public async Task<IReadOnlyCollection<IOutboxMessageRow>> LockAndGetNextBatchAsync(int batchSize, CancellationToken cancellationToken = default)
     {
         using SqlConnection connection = new(_options.SqlConnectionString);
@@ -122,9 +124,17 @@ public class OutboxRepository : IOutboxRepository
         return seqNum;
     }
 
+    /// <summary>
+    /// Selects a single entry by <paramref name="seqNum"/> from <c>Outbox</c> table.
+    /// </summary>
+    /// <returns><c>null</c> is no entry found.</returns>
     internal Task<IOutboxMessageRow?> SelectAsync(long seqNum, CancellationToken cancellationToken = default) =>
         this.SelectAsync(SQL.Select, seqNum, cancellationToken);
 
+    /// <summary>
+    /// Selects a single entry by <paramref name="seqNum"/> from <c>OutboxProcessed</c> table.
+    /// </summary>
+    /// <returns><c>null</c> is no entry found.</returns>
     internal Task<IOutboxMessageRow?> SelectProcessedAsync(long seqNum, CancellationToken cancellationToken = default) =>
         this.SelectAsync(SQL.SelectProcessed, seqNum, cancellationToken);
 

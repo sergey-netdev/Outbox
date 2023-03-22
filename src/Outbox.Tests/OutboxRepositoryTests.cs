@@ -141,6 +141,74 @@ public class OutboxRepositoryTests : IAsyncLifetime
         Assert.NotNull(processedMessageRow.ProcessedAtUtc);
     }
 
+    [Fact]
+    public async Task UpdateMessageAsUnsuccessfulAsync_Increases_RetryCount()
+    {
+        // setup
+        OutboxMessage message = GenerateRndMessage();
+        long seqNum = (await _repository.PutBatchAsync(new[] { message })).Single().Value;
+
+        IOutboxMessageRow? messageRow = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow);
+        Assert.Equal(0, messageRow.RetryCount);
+        Assert.Null(messageRow.ProcessedAtUtc);
+        Assert.Null(messageRow.LastErrorAtUtc);
+
+        // act #1
+        await _repository.UpdateMessageAsUnsuccessfulAsync(seqNum);
+
+        // verify
+        IOutboxMessageRow? messageRow1 = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow1);
+        Assert.Equal(1, messageRow1.RetryCount);
+        Assert.NotNull(messageRow1.LastErrorAtUtc);
+
+        // act #2
+        await _repository.UpdateMessageAsUnsuccessfulAsync(seqNum);
+
+        // verify
+        IOutboxMessageRow? messageRow2 = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow2);
+        Assert.Equal(2, messageRow2.RetryCount);
+        Assert.NotNull(messageRow2.LastErrorAtUtc);
+        Assert.True(messageRow1.LastErrorAtUtc! < messageRow2.LastErrorAtUtc!);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(4)]
+    public async Task UpdateMessageAsUnsuccessfulAsync_Moves_A_Message_When_MaxRetryCount_Is_Reached(byte maxRetryCount)
+    {
+        // setup
+        _repository.Options.MaxRetryCount = maxRetryCount; // override the setting
+        OutboxMessage message = GenerateRndMessage();
+        long seqNum = (await _repository.PutBatchAsync(new[] { message })).Single().Value;
+
+        Assert.Null(await _repository.SelectProcessedAsync(seqNum)); // nothing in OutboxProcessed
+        IOutboxMessageRow? messageRow = await _repository.SelectAsync(seqNum);
+        Assert.NotNull(messageRow);
+        Assert.Null(messageRow.LastErrorAtUtc);
+        Assert.Null(messageRow.ProcessedAtUtc);
+        Assert.Equal(0, messageRow.RetryCount);
+
+        // act
+        byte i = maxRetryCount;
+        do
+        {
+            await _repository.UpdateMessageAsUnsuccessfulAsync(seqNum);
+        }
+        while (i-- > 0);
+
+        // verify
+        Assert.Null(await _repository.SelectAsync(seqNum)); // nothing in Outbox
+        messageRow = await _repository.SelectProcessedAsync(seqNum);
+        Assert.NotNull(messageRow);
+        Assert.NotNull(messageRow.LastErrorAtUtc);
+        Assert.Null(messageRow.ProcessedAtUtc);
+        Assert.Equal(maxRetryCount + 1, messageRow.RetryCount);
+    }
+
     private static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
     {
         foreach (int _ in Enumerable.Range(0, batchSize))
