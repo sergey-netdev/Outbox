@@ -22,5 +22,5 @@ public class OutboxRepositoryOptions
     /// When querying messages for processing a lock is put on it to prevent duplicates.
     /// See also <see cref="UnlockInterval"/>.
     /// </summary>
-    public TimeSpan LockTimeout { get; set; }
+    public TimeSpan LockDuration { get; set; }
 }

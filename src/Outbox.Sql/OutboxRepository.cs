@@ -1,6 +1,7 @@
 ﻿namespace Outbox.Sql;
 using Microsoft.Data.SqlClient;
 using Outbox.Core;
+using System;
 using System.Threading;
 
 public class OutboxRepository : IOutboxRepository
@@ -22,7 +23,7 @@ public class OutboxRepository : IOutboxRepository
         using SqlCommand command = new(SQL.SelectForProcessing, connection);
         command.Parameters.AddWithValue("@BatchSize", batchSize);
         command.Parameters.AddWithValue("@MaxRetryCount", _options.MaxRetryCount);
-        command.Parameters.AddWithValue("@LockTimeoutInSeconds", (int)_options.LockTimeout.TotalSeconds);
+        command.Parameters.AddWithValue("@LockDurationInSeconds", (int)_options.LockDuration.TotalSeconds);
 
         using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         List<IOutboxMessageRow> result = new(batchSize); // allocate in advance as it's likely we'll have full batches every time under high load
@@ -34,9 +35,26 @@ public class OutboxRepository : IOutboxRepository
         return result;
     }
 
-    public Task UnlockAsync(int batchSize, CancellationToken cancellationToken = default)
+    public Task<int> UnlockAsync(int batchSize, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (batchSize <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(batchSize), batchSize, "Must be positive value.");
+        }
+
+        return this.UnlockAsyncInternal(batchSize, cancellationToken);
+    }
+
+    private async Task<int> UnlockAsyncInternal(int batchSize, CancellationToken cancellationToken)
+    {
+        using SqlConnection connection = new(_options.SqlConnectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        using SqlCommand command = new(SQL.Unlock, connection);
+        command.Parameters.AddWithValue("@BatchSize", batchSize);
+        command.Parameters.AddWithValue("@LockDurationInSeconds", (int)_options.LockDuration.TotalSeconds);
+
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyDictionary<string, long>> PutBatchAsync(IReadOnlyCollection<IOutboxMessage> batch, CancellationToken cancellationToken = default)

@@ -9,6 +9,7 @@ using System.Text.Json;
 public class OutboxRepositoryTests : IAsyncLifetime
 {
     const int QueryBatchSize = 10;
+    const int UnlockBatchSize = 10;
     private readonly OutboxRepository _repository;
     private readonly OutboxRepositoryOptions options = new();
 
@@ -73,6 +74,21 @@ public class OutboxRepositoryTests : IAsyncLifetime
 
             return rows;
         }
+    }
+
+    [Theory]
+    public async Task UnlockAsync_Removes_Expired_Locks(int totalLockedRows)
+    {
+        // setup
+        //_repository.Options.UnlockBatchSize
+        //await _repository.UnlockAsync(UnlockBatchSize);
+
+    }
+
+    [Fact]
+    public async Task UnlockAsync_Does_Not_Remove_NonExpired_Locks()
+    {
+
     }
 
     [Fact]

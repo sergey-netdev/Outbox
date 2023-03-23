@@ -157,11 +157,11 @@ namespace Outbox.Sql {
                 return ResourceManager.GetString("Select", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to --declare @BatchSize int = 10;
         ///--declare @MaxRetryCount int = 3;
-        ///--declare @LockTimeoutInSeconds int = 120;
+        ///--declare @LockDurationInSeconds int = 120;
         ///
         ///declare @RowsToProcess table ( -- the definition must be in sync with dbo.Outbox table
         ///    SeqNum bigint not null,
@@ -211,13 +211,13 @@ namespace Outbox.Sql {
                 return ResourceManager.GetString("Truncate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to with CTE as (
         ///    select top (@BatchSize) *
         ///    from dbo.Outbox
         ///    where
-        ///        LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) &gt; @LockTimeoutInSeconds
+        ///        LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) &gt; @LockDurationInSeconds
         ///    order by SeqNum
         ///)
         ///update CTE set LockedAtUtc = null

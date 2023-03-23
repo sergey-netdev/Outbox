@@ -1,6 +1,6 @@
 --declare @BatchSize int = 10;
 --declare @MaxRetryCount int = 3;
---declare @LockTimeoutInSeconds int = 120;
+--declare @LockDurationInSeconds int = 120;
 
 declare @RowsToProcess table ( -- the definition must be in sync with dbo.Outbox table
     SeqNum bigint not null,
@@ -33,7 +33,7 @@ with CTE as (
         dbo.Outbox
     where 
         ProcessedAtUtc is null
-            and (LockedAtUtc is null) -- or (LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) > @LockTimeoutInSeconds))
+            and (LockedAtUtc is null) -- or (LockedAtUtc is not null and DATEDIFF(ss, LockedAtUtc, GETUTCDATE()) > @LockDurationInSeconds))
             and (RetryCount <= @MaxRetryCount)
     order by
         SeqNum asc -- we want FIFO
