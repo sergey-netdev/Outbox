@@ -6,8 +6,9 @@ using System.Text;
 using System.Text.Json;
 
 [Collection("Sequential")]
-public class OutboxRepositoryTests : IAsyncLifetime
+public partial class OutboxRepositoryTests : IAsyncLifetime
 {
+    static readonly TimeSpan ClockSkewFix = TimeSpan.FromSeconds(1); // to compensate the difference between DateTime.UtcNow and Sql Server's GETUTCDATE() running in container
     const int QueryBatchSize = 10;
     const int UnlockBatchSize = 10;
     private readonly OutboxRepository _repository;
@@ -77,12 +78,38 @@ public class OutboxRepositoryTests : IAsyncLifetime
     }
 
     [Theory]
+    [InlineData(0)]
+    [InlineData(UnlockBatchSize)]
+    [InlineData(UnlockBatchSize + 2)]
+    [InlineData(UnlockBatchSize - 2)]
     public async Task UnlockAsync_Removes_Expired_Locks(int totalLockedRows)
     {
         // setup
-        //_repository.Options.UnlockBatchSize
-        //await _repository.UnlockAsync(UnlockBatchSize);
+        TimeSpan lockDuration = TimeSpan.FromSeconds(7);
+        _repository.Options.LockDuration = lockDuration;
 
+        const int totalNonlockedRows = 5;
+        OutboxMessageRow[] nonlockedMessageRows = GenerateRndMessageRows(totalNonlockedRows).ToArray();
+        IReadOnlyDictionary<string, long> nonlockedMessageRowKeys = await _repository.InsertAsync(nonlockedMessageRows);
+
+        DateTime now = DateTime.UtcNow;
+        DateTime lockedAtUtc = now - lockDuration - ClockSkewFix; // expired datetime
+        OutboxMessageRow[] lockedMessageRows = GenerateRndMessageRows(totalLockedRows, x => x.LockedAtUtc = lockedAtUtc).ToArray();
+        IReadOnlyDictionary<string, long> lockedMessageRowKeys = await _repository.InsertAsync(lockedMessageRows);
+
+        // act
+        int messageRowsUnlocked = await _repository.UnlockAsync(UnlockBatchSize);
+        Assert.Equal(Math.Min(UnlockBatchSize, totalLockedRows), messageRowsUnlocked);
+
+        // verify
+        IReadOnlyCollection<IOutboxMessageRow> allMessageRows = await _repository.SelectAllAsync();
+        HashSet<string> nonlockedIds = allMessageRows.Where(x => !x.LockedAtUtc.HasValue).Select(x => x.MessageId).ToHashSet();
+        HashSet<string> lockedIds = allMessageRows.Where(x => x.LockedAtUtc.HasValue).Select(x => x.MessageId).ToHashSet();
+
+        int expectedLockedRowsLeft = totalLockedRows - Math.Min(totalLockedRows, UnlockBatchSize);
+        Assert.Equal(expectedLockedRowsLeft, lockedIds.Count);
+
+        Assert.True(nonlockedIds.IsSupersetOf(nonlockedMessageRowKeys.Keys)); // originally nonlocked rows must stay intact
     }
 
     [Fact]
@@ -223,45 +250,5 @@ public class OutboxRepositoryTests : IAsyncLifetime
         Assert.NotNull(messageRow.LastErrorAtUtc);
         Assert.Null(messageRow.ProcessedAtUtc);
         Assert.Equal(maxRetryCount + 1, messageRow.RetryCount);
-    }
-
-    private static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
-    {
-        foreach (int _ in Enumerable.Range(0, batchSize))
-        {
-            yield return GenerateRndMessage();
-        }
-    }
-
-    private static OutboxMessage GenerateRndMessage(string? partitionId = null)
-    {
-        var message = new
-        {
-            Id = Guid.NewGuid().ToString().ToLower(),
-            Type = "test-message-type"
-        };
-
-        return new OutboxMessage(
-            messageId: message.Id,
-            messageType: message.Type,
-            topic: nameof(PutBatchAsync_Inserts_Message_Rows),
-            payload: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)))
-        {
-            PartitionId = partitionId ?? $"test-partition",
-        };
-    }
-
-    private static void VerifyNew(OutboxMessage expectedMessage, IOutboxMessageRow row)
-    {
-        Assert.Equal(expectedMessage.MessageId, row.MessageId);
-        Assert.Equal(expectedMessage.MessageType, row.MessageType);
-        Assert.Equal(expectedMessage.PartitionId, row.PartitionId);
-        Assert.Equal(expectedMessage.Topic, row.Topic);
-        Assert.Equal(expectedMessage.Payload, row.Payload);
-
-        Assert.Equal(0, row.RetryCount);
-        Assert.Null(row.LastErrorAtUtc);
-        Assert.Null(row.LockedAtUtc);
-        Assert.Null(row.ProcessedAtUtc);
     }
 }

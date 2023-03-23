@@ -2,6 +2,8 @@
 using Microsoft.Data.SqlClient;
 using Outbox.Core;
 using System;
+using System.Data;
+using System.Reflection.PortableExecutable;
 using System.Threading;
 
 public class OutboxRepository : IOutboxRepository
@@ -57,7 +59,15 @@ public class OutboxRepository : IOutboxRepository
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyDictionary<string, long>> PutBatchAsync(IReadOnlyCollection<IOutboxMessage> batch, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyDictionary<string, long>> PutBatchAsync(IReadOnlyCollection<IOutboxMessage> batch, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(nameof(batch));
+        //TODO: Create a separate model class, add validation for props & MessageId uniqueness?
+
+        return this.PutBatchAsyncInternal(batch, cancellationToken);
+    }
+
+    private async Task<IReadOnlyDictionary<string, long>> PutBatchAsyncInternal(IReadOnlyCollection<IOutboxMessage> batch, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(nameof(batch));
         //TODO: Create a separate model class, add validation for props & MessageId uniqueness?
@@ -73,7 +83,7 @@ public class OutboxRepository : IOutboxRepository
             command.Parameters.AddWithValue("@MessageId", m.MessageId);
             command.Parameters.AddWithValue("@MessageType", m.MessageType);
             command.Parameters.AddWithValue("@Topic", m.Topic);
-            command.Parameters.AddWithValue("@PartitionId", m.PartitionId);
+            command.Parameters.AddWithValue("@PartitionId", SetNullable(m.PartitionId));
             command.Parameters.AddWithValue("@Payload", m.Payload);
 
             long seqNum = (long)(await command.ExecuteScalarAsync(cancellationToken));
@@ -119,27 +129,38 @@ public class OutboxRepository : IOutboxRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    internal async Task<long> InsertAsync(IOutboxMessageRow row, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// For testing only. Inserts a row into <c>Outbox</c> table.
+    /// </summary>
+    /// <param name="rows">A collection to insert. Note, <see cref="IOutboxMessageRow.SeqNum"/> is ignored.</param>
+    /// <returns>A map between <see cref="IOutboxMessage.MessageId"/> and <see cref="IOutboxMessageRow.SeqNum"/> generated.</returns>
+    internal async Task<IReadOnlyDictionary<string, long>> InsertAsync(IReadOnlyCollection<IOutboxMessageRow> rows, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(nameof(row));
+        ArgumentNullException.ThrowIfNull(nameof(rows));
 
         using SqlConnection connection = new(_options.SqlConnectionString);
         await connection.OpenAsync(cancellationToken);
 
-        using SqlCommand command = new(SQL.InsertRaw, connection);
-        command.Parameters.AddWithValue("@MessageId", row.MessageId);
-        command.Parameters.AddWithValue("@MessageType", row.MessageType);
-        command.Parameters.AddWithValue("@Topic", row.Topic);
-        command.Parameters.AddWithValue("@PartitionId", row.PartitionId);
-        command.Parameters.AddWithValue("@Payload", row.Payload);
-        command.Parameters.AddWithValue("@RetryCount", row.RetryCount);
-        command.Parameters.AddWithValue("@LockedAtUtc", row.LockedAtUtc);
-        command.Parameters.AddWithValue("@GeneratedAtUtc", row.GeneratedAtUtc);
-        command.Parameters.AddWithValue("@LastErrorAtUtc", row.LastErrorAtUtc);
-        command.Parameters.AddWithValue("@ProcessedAtUtc", row.ProcessedAtUtc);
+        Dictionary<string, long> result = new(capacity: rows.Count);
+        foreach (IOutboxMessageRow row in rows)
+        {
+            using SqlCommand command = new(SQL.InsertRaw, connection);
+            command.Parameters.AddWithValue("@MessageId", row.MessageId);
+            command.Parameters.AddWithValue("@MessageType", row.MessageType);
+            command.Parameters.AddWithValue("@Topic", row.Topic);
+            command.Parameters.AddWithValue("@PartitionId", SetNullable(row.PartitionId));
+            command.Parameters.AddWithValue("@Payload", row.Payload);
+            command.Parameters.AddWithValue("@RetryCount", row.RetryCount);
+            command.Parameters.AddWithValue("@LockedAtUtc", SetNullable(row.LockedAtUtc));
+            command.Parameters.AddWithValue("@GeneratedAtUtc", row.GeneratedAtUtc);
+            command.Parameters.AddWithValue("@LastErrorAtUtc", SetNullable(row.LastErrorAtUtc));
+            command.Parameters.AddWithValue("@ProcessedAtUtc", SetNullable(row.ProcessedAtUtc));
 
-        long seqNum = (long)(await command.ExecuteScalarAsync(cancellationToken));
-        return seqNum;
+            long seqNum = (long)(await command.ExecuteScalarAsync(cancellationToken));
+            result.Add(row.MessageId, seqNum);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -155,6 +176,22 @@ public class OutboxRepository : IOutboxRepository
     /// <returns><c>null</c> is no entry found.</returns>
     internal Task<IOutboxMessageRow?> SelectProcessedAsync(long seqNum, CancellationToken cancellationToken = default) =>
         this.SelectAsync(SQL.SelectProcessed, seqNum, cancellationToken);
+
+    internal async Task<IReadOnlyCollection<IOutboxMessageRow>> SelectAllAsync(CancellationToken cancellationToken = default)
+    {
+        using SqlConnection connection = new(_options.SqlConnectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        using SqlCommand command = new(SQL.SelectAll, connection);
+        using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        List<IOutboxMessageRow> result = new();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(ReadRow(reader));
+        }
+
+        return result;
+    }
 
     private async Task<IOutboxMessageRow?> SelectAsync(string query, long seqNum, CancellationToken cancellationToken = default)
     {
@@ -173,6 +210,19 @@ public class OutboxRepository : IOutboxRepository
         return null;
     }
 
+    private static object SetNullable<T>(T? value) => value is null ? DBNull.Value : value;
+
+    ////private static T? GetNullable<T>(IDataReader reader, string name) where T: struct
+    ////{
+    ////    int indx = reader.GetOrdinal(name);
+    ////    return reader.IsDBNull(indx) ? default(T?) : (T)reader[indx];
+    ////}
+    ////private static T? GetNullable<T>(IDataReader reader, string name) where T : class
+    ////{
+    ////    int indx = reader.GetOrdinal(name);
+    ////    return reader.IsDBNull(indx) ? null : (T)reader[indx];
+    ////}
+
     private static IOutboxMessageRow ReadRow(SqlDataReader reader)
     {
         OutboxMessageRow result = new(
@@ -182,20 +232,14 @@ public class OutboxRepository : IOutboxRepository
             payload: (byte[])reader["Payload"])
         {
             SeqNum = (long)reader["SeqNum"],
-            PartitionId = (string)reader["PartitionId"],
+            PartitionId = reader["PartitionId"] as string,
             RetryCount = (byte)reader["RetryCount"],
-            GeneratedAtUtc = reader.GetFieldValue<DateTime>(reader.GetOrdinal("GeneratedAtUtc")),
-            LockedAtUtc = GetNullable<DateTime>("LockedAtUtc"),
-            ProcessedAtUtc = GetNullable<DateTime>("ProcessedAtUtc"),
-            LastErrorAtUtc = GetNullable<DateTime>("LastErrorAtUtc"),
+            GeneratedAtUtc = (DateTime)reader["GeneratedAtUtc"],
+            LockedAtUtc = reader["LockedAtUtc"] as DateTime?,
+            ProcessedAtUtc = reader["ProcessedAtUtc"] as DateTime?,
+            LastErrorAtUtc = reader["LastErrorAtUtc"] as DateTime?,
         };
 
         return result;
-
-        T? GetNullable<T>(string name) where T : struct
-        {
-            int indx = reader.GetOrdinal(name);
-            return reader.IsDBNull(indx) ? null : (T)reader[indx];
-        }
     }
 }

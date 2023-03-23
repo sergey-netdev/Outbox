@@ -145,6 +145,9 @@
   <data name="Select" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\sql\Select.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="SelectAll" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\sql\SelectAll.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="SelectProcessed" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\sql\SelectProcessed.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>

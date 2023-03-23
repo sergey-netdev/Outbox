@@ -157,7 +157,29 @@ namespace Outbox.Sql {
                 return ResourceManager.GetString("Select", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to select
+        ///    SeqNum,
+        ///    MessageId,
+        ///    MessageType,
+        ///    Topic,
+        ///    PartitionId,
+        ///    RetryCount,
+        ///    LockedAtUtc,
+        ///    GeneratedAtUtc,
+        ///    LastErrorAtUtc,
+        ///    ProcessedAtUtc,
+        ///    Payload
+        ///from dbo.Outbox;
+        ///.
+        /// </summary>
+        internal static string SelectAll {
+            get {
+                return ResourceManager.GetString("SelectAll", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to --declare @BatchSize int = 10;
         ///--declare @MaxRetryCount int = 3;
@@ -171,7 +193,7 @@ namespace Outbox.Sql {
         ///    PartitionId     varchar(32)     null,
         ///    RetryCount      tinyint         not null,
         ///    LockedAtUtc     datetime2       null,
-        ///    Gene [rest of string was truncated]&quot;;.
+        ///    Gen [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SelectForProcessing {
             get {
@@ -204,6 +226,7 @@ namespace Outbox.Sql {
         
         /// <summary>
         ///   Looks up a localized string similar to truncate table dbo.Outbox;
+        ///truncate table dbo.OutboxProcessed;
         ///.
         /// </summary>
         internal static string Truncate {
@@ -211,7 +234,7 @@ namespace Outbox.Sql {
                 return ResourceManager.GetString("Truncate", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to with CTE as (
         ///    select top (@BatchSize) *
@@ -230,8 +253,8 @@ namespace Outbox.Sql {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to declare @SeqNum bigint = 8;
-        ///declare @Move bit = 1;
+        ///   Looks up a localized string similar to --declare @SeqNum bigint = 8;
+        ///--declare @Move bit = 1;
         ///--declare @MaxRetryCount tinyint = 2;
         ///--declare @RetryCount tinyint;
         ///-- select * from dbo.Outbox
@@ -250,7 +273,7 @@ namespace Outbox.Sql {
         ///            PartitionId,
         ///            RetryCount,
         ///            LockedAtUtc,
-        ///            Generated [rest of string was truncated]&quot;;.
+        ///            Gener [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string UpdateSuccessful {
             get {
