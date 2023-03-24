@@ -7,15 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Core", "Outbox.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Tests", "Outbox.Tests\Outbox.Tests.csproj", "{F82C7C19-887C-47C3-A70C-882ED4B0DB04}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Rabbit", "Outbox.Rabbit\Outbox.Rabbit.csproj", "{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Sql", "Outbox.Sql\Outbox.Sql.csproj", "{15490EBE-A879-4469-8BA5-DA0894D4A85A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Job.RabbitMQ", "Outbox.Job.RabbitMQ\Outbox.Job.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Publisher.RabbitMQ", "Outbox.Job.RabbitMQ\Outbox.Publisher.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Service", "Outbox.Service\Outbox.Service.csproj", "{752BA559-10A0-4A33-B155-DBF93D66C880}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Service", "Outbox.Service\Outbox.Service.csproj", "{752BA559-10A0-4A33-B155-DBF93D66C880}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outbox.Service.Console", "Outbox.Service.Console\Outbox.Service.Console.csproj", "{6934BFDD-DB4F-47C8-8EC0-55862C518485}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Service.Console", "Outbox.Service.Console\Outbox.Service.Console.csproj", "{6934BFDD-DB4F-47C8-8EC0-55862C518485}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +29,6 @@ Global
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F82C7C19-887C-47C3-A70C-882ED4B0DB04}.Release|Any CPU.Build.0 = Release|Any CPU
-		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{816E2FD0-1C4C-4B13-B5D5-04C01363DBA7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15490EBE-A879-4469-8BA5-DA0894D4A85A}.Release|Any CPU.ActiveCfg = Release|Any CPU
