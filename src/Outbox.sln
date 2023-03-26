@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Tests", "Outbox.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Sql", "Outbox.Sql\Outbox.Sql.csproj", "{15490EBE-A879-4469-8BA5-DA0894D4A85A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Publisher.RabbitMQ", "Outbox.Job.RabbitMQ\Outbox.Publisher.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Publisher.RabbitMQ", "Outbox.Publisher.RabbitMQ\Outbox.Publisher.RabbitMQ.csproj", "{87032340-5B23-4773-AA65-024FE313DD48}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Outbox.Service", "Outbox.Service\Outbox.Service.csproj", "{752BA559-10A0-4A33-B155-DBF93D66C880}"
 EndProject

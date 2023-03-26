@@ -1,10 +1,14 @@
-﻿using System.Text;
+﻿/*
+//namespace Outbox.Publisher.RabbitMQ;
+using System.Text;
 using RabbitMQ.Client;
 
 ConnectionFactory factory = new() { HostName = "localhost" };
 
 using IConnection connection = factory.CreateConnection();
 using IModel channel = connection.CreateModel();
+
+////channel.ExchangeDeclare
 
 channel.QueueDeclare(queue: "hello",
                      durable: false,
@@ -23,3 +27,4 @@ Console.WriteLine($" [x] Sent {message}");
 
 Console.WriteLine(" Press [enter] to exit.");
 Console.ReadLine();
+*/

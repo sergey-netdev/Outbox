@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Outbox.Core\Outbox.Core.csproj" />
+    <ProjectReference Include="..\Outbox.Publisher.RabbitMQ\Outbox.Publisher.RabbitMQ.csproj" />
     <ProjectReference Include="..\Outbox.Service\Outbox.Service.csproj" />
     <ProjectReference Include="..\Outbox.Sql\Outbox.Sql.csproj" />
   </ItemGroup>

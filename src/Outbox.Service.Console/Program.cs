@@ -38,6 +38,7 @@ class Program
             });
 
         IHost host = hostBuilder.Build();
+
         OutboxService outboxService = host.Services.GetRequiredService<OutboxService>();
         await outboxService.ExecuteAsync();
     }
