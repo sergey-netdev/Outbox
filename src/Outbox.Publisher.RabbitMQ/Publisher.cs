@@ -2,6 +2,7 @@
 
 using global::RabbitMQ.Client;
 using Outbox.Core;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 public class Publisher : IPublisher, IDisposable
@@ -31,17 +32,20 @@ public class Publisher : IPublisher, IDisposable
         return this.PublishAsyncInternal(message);
     }
 
-    private async Task PublishAsyncInternal(IOutboxMessage message)
+    private Task PublishAsyncInternal(IOutboxMessage message)
     {
-        ArgumentNullException.ThrowIfNull(message, nameof(message));
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(null);
-        }
+        using IModel channel = this.Connection.CreateModel();
 
-        await Task.Delay(0);
+        channel.BasicPublish(
+            exchange: _options.Exchange,
+            routingKey: message.Topic,
+            basicProperties: null,
+            body: message.Payload);
+
+        return Task.CompletedTask;
     }
 
+    #region IDisposable
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
@@ -63,4 +67,5 @@ public class Publisher : IPublisher, IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+    #endregion
 }

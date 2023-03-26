@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 
 [Collection("Sequential")]
-public partial class OutboxRepositoryTests : IAsyncLifetime
+public partial class OutboxRepositoryTests : TestBase, IAsyncLifetime
 {
     static readonly TimeSpan ClockSkewFix = TimeSpan.FromSeconds(1); // to compensate the difference between DateTime.UtcNow and Sql Server's GETUTCDATE() running in container
     const int QueryBatchSize = 10;

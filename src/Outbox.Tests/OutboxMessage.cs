@@ -1,7 +1,7 @@
 ﻿namespace Outbox.Tests;
 using Outbox.Core;
 
-internal class OutboxMessage : IOutboxMessage
+public class OutboxMessage : IOutboxMessage
 {
     public OutboxMessage(string messageId, string messageType, string topic, byte[] payload)
     {

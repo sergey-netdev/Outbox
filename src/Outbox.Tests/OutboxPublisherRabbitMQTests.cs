@@ -6,7 +6,7 @@ using Outbox.Core;
 using Outbox.Publisher.RabbitMQ;
 using System;
 
-public class OutboxPublisherRabbitMQTests : IDisposable
+public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
 {
     private readonly IHost _host;
     private readonly IPublisher _publisher;
@@ -33,8 +33,12 @@ public class OutboxPublisherRabbitMQTests : IDisposable
     }
 
     [Fact]
-    public void T()
+    public async Task PublishAsync_Sends_A_Message()
     {
+        // setup
+        OutboxMessage message = GenerateRndMessage();
 
+        // act
+        await _publisher.PublishAsync(message);
     }
 }

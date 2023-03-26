@@ -4,9 +4,9 @@ using Outbox.Sql;
 using System.Text;
 using System.Text.Json;
 
-public partial class OutboxRepositoryTests
+public partial class TestBase
 {
-    private static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
+    protected static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
     {
         foreach (int _ in Enumerable.Range(0, batchSize))
         {
@@ -14,7 +14,7 @@ public partial class OutboxRepositoryTests
         }
     }
 
-    private static OutboxMessage GenerateRndMessage(string? partitionId = null)
+    protected static OutboxMessage GenerateRndMessage(string? partitionId = null)
     {
         var message = new
         {
@@ -25,14 +25,14 @@ public partial class OutboxRepositoryTests
         return new OutboxMessage(
             messageId: message.Id,
             messageType: message.Type,
-            topic: nameof(PutBatchAsync_Inserts_Message_Rows),
+            topic: "test-topic",
             payload: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)))
         {
             PartitionId = partitionId ?? $"test-partition",
         };
     }
 
-    private static IEnumerable<OutboxMessageRow> GenerateRndMessageRows(int batchSize, Action<OutboxMessageRow>? initAction = null)
+    protected static IEnumerable<OutboxMessageRow> GenerateRndMessageRows(int batchSize, Action<OutboxMessageRow>? initAction = null)
     {
         foreach (int _ in Enumerable.Range(0, batchSize))
         {
@@ -41,7 +41,8 @@ public partial class OutboxRepositoryTests
             yield return result;
         }
     }
-    private static OutboxMessageRow GenerateRndMessageRow(string? partitionId = null)
+
+    protected static OutboxMessageRow GenerateRndMessageRow(string? partitionId = null)
     {
         OutboxMessage message = GenerateRndMessage(partitionId); // for the sake of reuse
         OutboxMessageRow messageRow = new(message.MessageId, message.MessageType, message.Topic, message.Payload)
@@ -53,7 +54,7 @@ public partial class OutboxRepositoryTests
         return messageRow;
     }
 
-    private static void VerifyNew(OutboxMessage expectedMessage, IOutboxMessageRow row)
+    protected static void VerifyNew(OutboxMessage expectedMessage, IOutboxMessageRow row)
     {
         Assert.Equal(expectedMessage.MessageId, row.MessageId);
         Assert.Equal(expectedMessage.MessageType, row.MessageType);
