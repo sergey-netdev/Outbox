@@ -398,3 +398,6 @@ FodyWeavers.xsd
 *.sln.iml
 
 /src/rabbitmq/container/*
+/src/.docker/rabbitmq/data/*
+/src/.docker/rabbitmq/logs/*
+

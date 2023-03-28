@@ -16,15 +16,17 @@ services:
     hostname: rabbitmq
     restart: always
     environment:
-# default credentials: guest/guest
-#      - RABBITMQ_DEFAULT_USER=user
-#      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
     volumes:
-      - ./rabbitmq/container/data/:/var/lib/rabbitmq/
-      - ./rabbitmq/container/log/:/var/log/rabbitmq
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+#      - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
+      - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./.docker/rabbitmq/logs/:/var/log/rabbitmq/
+#      - ./rabbitmq/data/:/var/lib/rabbitmq/
+#      - ./rabbitmq/log/:/var/log/rabbitmq
+#      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+#      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     ports:
       - 15672:15672
       - 5672:5672
