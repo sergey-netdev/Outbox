@@ -9,6 +9,8 @@ services:
       - MSSQL_SA_PASSWORD=G0neFishing
     ports:
       - 14330:1433
+    depends_on:
+      - toxiproxy-config
 
   rabbitmq:
     image: rabbitmq:3.11.10-management
@@ -20,15 +22,29 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
     volumes:
-#      - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
       - ./.docker/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - ./.docker/rabbitmq/etc/definitions.json:/etc/rabbitmq/definitions.json:ro
       - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
       - ./.docker/rabbitmq/logs/:/var/log/rabbitmq/
-#      - ./rabbitmq/data/:/var/lib/rabbitmq/
-#      - ./rabbitmq/log/:/var/log/rabbitmq
-#      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-#      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     ports:
       - 15672:15672
       - 5672:5672
+    depends_on:
+      - toxiproxy-config
+
+  toxiproxy:
+    image: "shopify/toxiproxy"
+    ports:
+       - "8474:8474"
+       - "17000:17000"
+       - "17330:17330"
+
+  toxiproxy-config:
+    image: "shopify/toxiproxy"
+    entrypoint: > 
+      sh -c "
+      /go/bin/toxiproxy-cli -h toxiproxy:8474 create rabbitmq --listen 0.0.0.0:17000 --upstream rabbitmq:5672;
+      /go/bin/toxiproxy-cli -h toxiproxy:8474 create sql --listen 0.0.0.0:17330 --upstream sql:14330;
+      /go/bin/toxiproxy-cli -h toxiproxy:8474 toxic add rabbitmq --type latency -n testLatency -a latency=2000 -a jitter=0;"
+    depends_on:
+      - toxiproxy
