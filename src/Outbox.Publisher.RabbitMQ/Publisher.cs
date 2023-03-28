@@ -45,6 +45,11 @@ public class Publisher : IPublisher, IDisposable
         return Task.CompletedTask;
     }
 
+    internal void ReadAsync()
+    {
+
+    }
+
     #region IDisposable
     protected virtual void Dispose(bool disposing)
     {

@@ -6,6 +6,8 @@ using System.Text.Json;
 
 public partial class TestBase
 {
+    public const string DefaultTopic = "outbox.test.topic";
+
     protected static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize)
     {
         foreach (int _ in Enumerable.Range(0, batchSize))
@@ -25,7 +27,7 @@ public partial class TestBase
         return new OutboxMessage(
             messageId: message.Id,
             messageType: message.Type,
-            topic: "test-topic",
+            topic: DefaultTopic,
             payload: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)))
         {
             PartitionId = partitionId ?? $"test-partition",
