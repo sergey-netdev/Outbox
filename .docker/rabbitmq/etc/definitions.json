@@ -1,7 +1,16 @@
 {
 "queues": [
     {
-        "name": "outbox.test.topic",
+        "name": "outbox.test.topicA",
+        "vhost": "/",
+        "durable": true,
+        "auto_delete": false,
+        "arguments": {
+            "x-queue-type": "classic"
+        }
+    },
+    {
+        "name": "outbox.test.topicB",
         "vhost": "/",
         "durable": true,
         "auto_delete": false,
@@ -27,9 +36,17 @@
     {
         "source": "outbox.test.exchange",
         "vhost": "/",
-        "destination": "outbox.test.topic",
+        "destination": "outbox.test.topicA",
         "destination_type": "queue",
-        "routing_key": "outbox.test.topic",
+        "routing_key": "outbox.test.topicA",
+        "arguments": {}
+    },
+    {
+        "source": "outbox.test.exchange",
+        "vhost": "/",
+        "destination": "outbox.test.topicB",
+        "destination_type": "queue",
+        "routing_key": "outbox.test.topicB",
         "arguments": {}
     }
 ],

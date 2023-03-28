@@ -1,6 +1,8 @@
 ﻿namespace Outbox.Publisher.RabbitMQ;
 
 using global::RabbitMQ.Client;
+using global::RabbitMQ.Client.Events;
+using global::RabbitMQ.Client.Exceptions;
 using Outbox.Core;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,6 +21,8 @@ public class Publisher : IPublisher, IDisposable
         _connection = new(() => _connectionFactory.CreateConnection(), true);
     }
 
+    internal PublisherOptions Options => _options;
+
     private IConnection Connection => _connection.Value;
 
     public Task PublishAsync(IOutboxMessage message)
@@ -32,35 +36,57 @@ public class Publisher : IPublisher, IDisposable
         return this.PublishAsyncInternal(message);
     }
 
-    private Task PublishAsyncInternal(IOutboxMessage message)
+    private Task PublishAsyncInternal(IOutboxMessage message, CancellationToken cancellationToken = default)
     {
-        using IModel channel = this.Connection.CreateModel();
+        DeliveryException? deliveryException = null;
+        bool acked = false, nacked = false, confirmed = false;
 
-        channel.BasicPublish(
-            exchange: _options.Exchange,
-            routingKey: message.Topic,
-            basicProperties: null,
-            body: message.Payload);
+        try
+        {
+            using IModel channel = this.Connection.CreateModel();
+            channel.BasicAcks += (sender, args) => acked = true;
+            channel.BasicNacks += (sender, args) => nacked = true;
+            channel.BasicReturn += (sender, args) => deliveryException = new DeliveryException(args.ReplyText) { RoutingKey = args.RoutingKey, ReplyCode = args.ReplyCode };
+            channel.ConfirmSelect();
+            channel.BasicPublish(_options.Exchange, routingKey: message.Topic, basicProperties: null, mandatory: true, body: message.Payload);
+            confirmed = channel.WaitForConfirms(_options.PublishTimeout);
+        }
+        catch (BrokerUnreachableException ex)
+        {
+            throw new TimeoutException(TimeoutException.CannotConnectMessage, ex);
+        }
+        catch (Exception ex)
+        {
+            throw new RepositoryException("Generic broker error.", ex);
+        }
+
+        if (deliveryException != null)
+        {
+            throw deliveryException;
+        }
+
+        if (!confirmed)
+        {
+            throw new DeliveryException($"Message '{message.MessageId}' could not be confirmed.");
+        }
 
         return Task.CompletedTask;
     }
 
     internal Task<ReadOnlyMemory<byte>?> ReadAsync(string queueName)
     {
-        ArgumentNullException.ThrowIfNullOrEmpty(queueName, nameof(queueName));
+        ArgumentException.ThrowIfNullOrEmpty(queueName, nameof(queueName));
 
-        using IModel channel = this.Connection.CreateModel();
-        BasicGetResult result = channel.BasicGet(queueName, autoAck: true);
-        ////if (result == null)
-        ////{
-        ////    // No message available at this time.
-        ////}
-        ////else
-        ////{
-        ////    IBasicProperties props = result.BasicProperties;
-        ////}
-        
-        return Task.FromResult(result?.Body);
+        try
+        {
+            using IModel channel = this.Connection.CreateModel();
+            BasicGetResult result = channel.BasicGet(queueName, autoAck: true);
+            return Task.FromResult(result?.Body);
+        }
+        catch (Exception ex)
+        {
+            throw new RepositoryException("Generic broker error.", ex);
+        }
     }
 
     internal async Task<IReadOnlyCollection<ReadOnlyMemory<byte>>> ReadAllAsync(string queueName, CancellationToken cancellationToken)

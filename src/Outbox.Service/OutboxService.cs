@@ -55,6 +55,6 @@ public class OutboxService : IOutboxService
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        GC.SuppressFinalize(this);
     }
 }
