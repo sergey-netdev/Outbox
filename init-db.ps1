@@ -13,7 +13,7 @@ param(
 	[string]$SqlDBName		= "Outbox",
 
 	[parameter(Mandatory=$false)]
-	[string]$SqlInitScriptPath	= "../sql/Init.sql"
+	[string]$SqlInitScriptPath	= "./sql/Init.sql"
 )
 
 Function Execute-SqlCommand
