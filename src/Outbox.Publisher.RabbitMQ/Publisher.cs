@@ -45,9 +45,49 @@ public class Publisher : IPublisher, IDisposable
         return Task.CompletedTask;
     }
 
-    internal void ReadAsync()
+    internal Task<ReadOnlyMemory<byte>?> ReadAsync(string queueName)
     {
+        ArgumentNullException.ThrowIfNullOrEmpty(queueName, nameof(queueName));
 
+        using IModel channel = this.Connection.CreateModel();
+        BasicGetResult result = channel.BasicGet(queueName, autoAck: true);
+        ////if (result == null)
+        ////{
+        ////    // No message available at this time.
+        ////}
+        ////else
+        ////{
+        ////    IBasicProperties props = result.BasicProperties;
+        ////}
+        
+        return Task.FromResult(result?.Body);
+    }
+
+    internal async Task<IReadOnlyCollection<ReadOnlyMemory<byte>>> ReadAllAsync(string queueName, CancellationToken cancellationToken)
+    {
+        const int delayBetweenReads = 200;
+        List<ReadOnlyMemory<byte>> result = new();
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            ReadOnlyMemory<byte>? messagePayload = await this.ReadAsync(queueName);
+            if (messagePayload != null)
+            {
+                result.Add(messagePayload.Value);
+            }
+            else
+            {
+                try
+                {
+                    await Task.Delay(millisecondsDelay: delayBetweenReads, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     #region IDisposable

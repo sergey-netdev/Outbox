@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a message to be published.
 /// </summary>
-public interface IOutboxMessage
+public interface IOutboxMessage : IOutboxMessageBase
 {
     /// <summary>
     /// The unique message identifier.
@@ -15,6 +15,4 @@ public interface IOutboxMessage
     string Topic { get; }
 
     string? PartitionId { get; }
-
-    byte[] Payload { get; }
 }

@@ -9,7 +9,8 @@ using System;
 public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
 {
     private readonly IHost _host;
-    private readonly IPublisher _publisher;
+    private readonly Publisher _publisher;
+    private readonly CancellationTokenSource _readCts = new(TimeSpan.FromMilliseconds(300));
 
     public OutboxPublisherRabbitMQTests()
     {
@@ -24,7 +25,7 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
             });
 
         _host = hostBuilder.Build();
-        _publisher = _host.Services.GetRequiredService<IPublisher>();
+        _publisher = (Publisher)_host.Services.GetRequiredService<IPublisher>();
     }
 
     public void Dispose()
@@ -40,5 +41,17 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
 
         // act
         await _publisher.PublishAsync(message);
+
+        // verify
+        IReadOnlyCollection<IOutboxMessageBase> messages = await PullMessagesAsync();
+        IOutboxMessageBase receivedMessage = Assert.Single(messages);
+        Assert.Equal(message.Payload, receivedMessage.Payload);
+    }
+
+    private async Task<IReadOnlyCollection<IOutboxMessageBase>> PullMessagesAsync()
+    {
+        IReadOnlyCollection<ReadOnlyMemory<byte>> payloads = await _publisher.ReadAllAsync(DefaultTopic, _readCts.Token);
+        OutboxMessageBase[] result = payloads.Select(x => new OutboxMessageBase(x.ToArray())).ToArray();
+        return result;
     }
 }
