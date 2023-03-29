@@ -103,15 +103,21 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
         await _publisher.PublishAsync(message);
 
         // verify
-        IReadOnlyCollection<IOutboxMessageBase> messages = await PullMessagesAsync(message.Topic);
-        IOutboxMessageBase receivedMessage = Assert.Single(messages);
+        IOutboxMessageBase? receivedMessage = await PullMessageAsync(message.Topic);
+        Assert.NotNull(receivedMessage);
         Assert.Equal(message.Payload, receivedMessage.Payload);
+    }
+
+    private async Task<IOutboxMessageBase?> PullMessageAsync(string topic)
+    {
+        byte[]? payload = await _publisher.ReadMessageAsync(topic);
+        return payload != null ? new OutboxMessageBase(payload) : null;
     }
 
     private async Task<IReadOnlyCollection<IOutboxMessageBase>> PullMessagesAsync(string topic)
     {
-        IReadOnlyCollection<ReadOnlyMemory<byte>> payloads = await _publisher.ReadAllAsync(topic, _readCts.Token);
-        OutboxMessageBase[] result = payloads.Select(x => new OutboxMessageBase(x.ToArray())).ToArray();
+        IReadOnlyCollection<byte[]> payloads = await _publisher.ReadBatchAsync(topic, 10, TimeSpan.FromMilliseconds(100), CancellationToken.None);
+        OutboxMessageBase[] result = payloads.Select(x => new OutboxMessageBase(x)).ToArray();
         return result;
     }
 }

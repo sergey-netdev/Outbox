@@ -73,7 +73,7 @@ public class Publisher : IPublisher, IDisposable
         return Task.CompletedTask;
     }
 
-    internal Task<ReadOnlyMemory<byte>?> ReadAsync(string queueName)
+    internal Task<byte[]?> ReadMessageAsync(string queueName)
     {
         ArgumentException.ThrowIfNullOrEmpty(queueName, nameof(queueName));
 
@@ -81,7 +81,7 @@ public class Publisher : IPublisher, IDisposable
         {
             using IModel channel = this.Connection.CreateModel();
             BasicGetResult result = channel.BasicGet(queueName, autoAck: true);
-            return Task.FromResult(result?.Body);
+            return Task.FromResult(result?.Body.ToArray());
         }
         catch (Exception ex)
         {
@@ -89,13 +89,42 @@ public class Publisher : IPublisher, IDisposable
         }
     }
 
+    internal async Task<IReadOnlyCollection<byte[]>> ReadBatchAsync(string queueName, int batchSize, TimeSpan readTime, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queueName, nameof(queueName));
+
+        List<byte[]> result = new(batchSize);
+        try
+        {
+            using IModel channel = this.Connection.CreateModel();
+            channel.BasicQos(prefetchSize: 0 /*not implemented by the client*/, (ushort)batchSize, global: false);
+
+            EventingBasicConsumer consumer = new(channel);
+            consumer.Received += (sender, args) =>
+            {
+                result.Add(args.Body.ToArray());
+                channel.BasicAck(args.DeliveryTag, multiple: true); // positively acknowledge all deliveries up to this delivery tag
+            };
+
+            string consumerTag = channel.BasicConsume(queueName, autoAck: false, consumer);
+            await Task.Delay(readTime, cancellationToken).ConfigureAwait(false);
+            channel.BasicCancel(consumerTag);
+        }
+        catch (Exception ex)
+        {
+            throw new RepositoryException("Generic broker error.", ex);
+        }
+
+        return result;
+    }
+
     internal async Task<IReadOnlyCollection<ReadOnlyMemory<byte>>> ReadAllAsync(string queueName, CancellationToken cancellationToken)
     {
-        const int delayBetweenReads = 200;
+        const int delayBetweenReads = 50;
         List<ReadOnlyMemory<byte>> result = new();
         while (!cancellationToken.IsCancellationRequested)
         {
-            ReadOnlyMemory<byte>? messagePayload = await this.ReadAsync(queueName);
+            ReadOnlyMemory<byte>? messagePayload = await this.ReadMessageAsync(queueName);
             if (messagePayload != null)
             {
                 result.Add(messagePayload.Value);
