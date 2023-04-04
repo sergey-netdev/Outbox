@@ -1,6 +1,6 @@
 ﻿namespace Outbox.Core;
 
-public interface IPublisher
+public interface IOutboxPublisher
 {
     Task PublishAsync(IOutboxMessage message);
 }

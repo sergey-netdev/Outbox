@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Outbox.Core;
 using Outbox.Publisher.RabbitMQ;
 using RabbitMQ.Client;
@@ -13,28 +12,21 @@ using TimeoutException = Outbox.Publisher.RabbitMQ.TimeoutException;
 public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
 {
     public const int MaxMessageSize = 1024; // see ./.docker/rabbitmq/etc/rabbitmq.conf
+    public const int RabbitToxicPort = 17000; // see docker-compose.yml
     private readonly IHost _host;
-    private Publisher _publisher;
+    private OutboxPublisher _publisher;
     private readonly CancellationTokenSource _readCts = new(TimeSpan.FromMilliseconds(300));
-    ////private readonly Dictionary<string, string> _configurationOverrides = new()
-    ////    {
-    ////    };
 
     public OutboxPublisherRabbitMQTests()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
-            ////.AddInMemoryCollection(_configurationOverrides!)
-            .Build();
-
-        IHostBuilder hostBuilder = Host.CreateDefaultBuilder()
+        _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
-                services.AddOutboxRabbitMQPublisher(configuration);
-            });
+                services.AddOutboxRabbitMQPublisher(_configuration);
+            })
+            .Build();
 
-        _host = hostBuilder.Build();
-        _publisher = (Publisher)_host.Services.GetRequiredService<IPublisher>();
+        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
     }
 
     public void Dispose()
@@ -64,7 +56,7 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
         // setup
         ConnectionFactory connectionFactory = (ConnectionFactory)_host.Services.GetService<IConnectionFactory>()!;
         connectionFactory.RequestedConnectionTimeout = TimeSpan.FromMicroseconds(1);
-        _publisher = (Publisher)_host.Services.GetRequiredService<IPublisher>(); // re-resolve so the new timeout is applied
+        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>(); // re-resolve so the new timeout is applied
         _publisher.Options.PublishTimeout = connectionFactory.RequestedConnectionTimeout * 10;
 
         OutboxMessage message = GenerateRndMessage();
@@ -77,21 +69,24 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
         Assert.IsType<BrokerUnreachableException>(ex.InnerException);
     }
 
-    ////[Fact]
-    ////public async Task PublishAsync_Throws_TimeoutException_When_Exceeding_PublishTimeout()
-    ////{
-    ////    // setup
-    ////    _publisher.Options.PublishTimeout = TimeSpan.FromMicroseconds(0);
+    [Fact]
+    public async Task PublishAsync_Throws_TimeoutException_When_Exceeding_PublishTimeout()
+    {
+        // setup
+        ConnectionFactory connectionFactory = (ConnectionFactory)_host.Services.GetService<IConnectionFactory>()!;
+        connectionFactory.Port = RabbitToxicPort; // adds 500ms latency to any data
+        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>(); // re-resolve so the new timeout is applied
+        //_publisher.Options.PublishTimeout = TimeSpan.FromMilliseconds(99);
 
-    ////    OutboxMessage message = GenerateRndMessage();
+        OutboxMessage message = GenerateRndMessage();
 
-    ////    // act
-    ////    TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher.PublishAsync(message));
+        // act
+        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher.PublishAsync(message));
 
-    ////    // verify
-    ////    Assert.Equal(TimeoutException.CannotConnectMessage, ex.Message);
-    ////    Assert.IsType<BrokerUnreachableException>(ex.InnerException);
-    ////}
+        // verify
+        Assert.Equal(TimeoutException.CannotConnectMessage, ex.Message);
+        Assert.IsType<BrokerUnreachableException>(ex.InnerException);
+    }
 
     [Fact]
     public async Task PublishAsync_Sends_A_Message_To_Specified_Topic()

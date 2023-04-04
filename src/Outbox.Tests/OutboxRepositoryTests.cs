@@ -1,10 +1,10 @@
 ﻿namespace Outbox.Tests;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Outbox.Core;
 using Outbox.Sql;
 using System;
-using System.Text;
-using System.Text.Json;
 
 [Collection("Sequential")]
 public partial class OutboxRepositoryTests : TestBase, IAsyncLifetime
@@ -12,17 +12,20 @@ public partial class OutboxRepositoryTests : TestBase, IAsyncLifetime
     static readonly TimeSpan ClockSkewFix = TimeSpan.FromSeconds(1); // to compensate the difference between DateTime.UtcNow and Sql Server's GETUTCDATE() running in container
     const int QueryBatchSize = 10;
     const int UnlockBatchSize = 10;
+    private readonly IHost _host;
     private readonly OutboxRepository _repository;
     private readonly OutboxRepositoryOptions options = new();
 
     public OutboxRepositoryTests()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
+        _host = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddOutboxSqlRepository(_configuration);
+            })
             .Build();
-        configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Bind(options);
 
-        _repository = new OutboxRepository(options);
+        _repository = (OutboxRepository)_host.Services.GetRequiredService<IOutboxRepository>();
     }
 
     #region IAsyncLifetime

@@ -1,4 +1,6 @@
 ﻿namespace Outbox.Tests;
+
+using Microsoft.Extensions.Configuration;
 using Outbox.Core;
 using Outbox.Sql;
 using System.Text;
@@ -10,6 +12,14 @@ public partial class TestBase
     public const string TopicA = "outbox.test.topicA";
     public const string TopicB = "outbox.test.topicB";
     public static readonly IReadOnlySet<string> Topics = new HashSet<string>(new[] { TopicA, TopicB });
+    protected readonly IConfiguration _configuration;
+
+    public TestBase()
+    {
+        _configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+    }
 
     protected static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize, string? topic = null)
     {

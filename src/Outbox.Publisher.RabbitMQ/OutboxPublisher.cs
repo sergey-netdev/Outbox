@@ -4,24 +4,25 @@ using global::RabbitMQ.Client;
 using global::RabbitMQ.Client.Events;
 using global::RabbitMQ.Client.Exceptions;
 using Outbox.Core;
+using System.Diagnostics;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-public class Publisher : IPublisher, IDisposable
+public class OutboxPublisher : IOutboxPublisher, IDisposable
 {
     private readonly IConnectionFactory _connectionFactory;
     private readonly Lazy<IConnection> _connection;
-    private readonly PublisherOptions _options;
+    private readonly OutboxPublisherOptions _options;
     private bool _disposed;
 
-    public Publisher(IConnectionFactory connectionFactory, PublisherOptions options)
+    public OutboxPublisher(IConnectionFactory connectionFactory, OutboxPublisherOptions options)
     {
         _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _connection = new(() => _connectionFactory.CreateConnection(), true);
     }
 
-    internal PublisherOptions Options => _options;
+    internal OutboxPublisherOptions Options => _options;
 
     private IConnection Connection => _connection.Value;
 
@@ -41,22 +42,36 @@ public class Publisher : IPublisher, IDisposable
         DeliveryException? deliveryException = null;
         bool acked = false, nacked = false, confirmed = false;
 
+        Stopwatch sw = new Stopwatch();
+        Stopwatch sw1 = new Stopwatch();
+        sw.Start();
         try
         {
+            //cancellationToken.ThrowIfCancellationRequested();
             using IModel channel = this.Connection.CreateModel();
-            channel.BasicAcks += (sender, args) => acked = true;
-            channel.BasicNacks += (sender, args) => nacked = true;
+            //cancellationToken.ThrowIfCancellationRequested();
+            sw1.Start();
+            channel.BasicAcks += (sender, args) =>
+                acked = true;
+            channel.BasicNacks += (sender, args) =>
+                nacked = true;
             channel.BasicReturn += (sender, args) => deliveryException = new DeliveryException(args.ReplyText) { RoutingKey = args.RoutingKey, ReplyCode = args.ReplyCode };
             channel.ConfirmSelect();
-            channel.BasicPublish(_options.Exchange, routingKey: message.Topic, basicProperties: null, mandatory: true, body: message.Payload);
-            confirmed = channel.WaitForConfirms(_options.PublishTimeout);
+            //////cancellationToken.ThrowIfCancellationRequested();
+            ////channel.BasicPublish(_options.Exchange, routingKey: message.Topic, basicProperties: null, mandatory: true, body: message.Payload);
+
+            channel.WaitForConfirmsOrDie(_options.PublishTimeout);
         }
         catch (BrokerUnreachableException ex)
         {
-            throw new TimeoutException(TimeoutException.CannotConnectMessage, ex);
+            sw.Stop();
+            sw1.Stop();
+           throw new TimeoutException(TimeoutException.CannotConnectMessage, ex);
         }
         catch (Exception ex)
         {
+            sw.Stop();
+            sw1.Stop();
             throw new RepositoryException("Generic broker error.", ex);
         }
 

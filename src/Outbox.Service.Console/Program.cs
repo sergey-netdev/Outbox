@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting; // Requires NuGet package
 using Microsoft.Extensions.Logging;
 using Outbox.Core;
+using Outbox.Publisher.RabbitMQ;
 using Outbox.Sql;
 
 class Program
@@ -25,22 +26,17 @@ class Program
             })
             .ConfigureServices(services =>
             {
-                OutboxServiceOptions outboxServiceOptions = configuration.GetSection(OutboxServiceOptions.DefaultSectionName).Get<OutboxServiceOptions>()
-                    ?? throw new InvalidOperationException($"Cannot initialize configuration.");
-                services.AddSingleton(outboxServiceOptions);
-
-                OutboxRepositoryOptions outboxRepositoryOptions = configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Get<OutboxRepositoryOptions>()
-                    ?? throw new InvalidOperationException($"Cannot initialize configuration.");
-                services.AddSingleton(outboxRepositoryOptions);
-
-                services.AddSingleton<IOutboxRepository, OutboxRepository>();
-                services.AddSingleton<OutboxService>();
+                services.AddOutboxSqlRepository(configuration);
+                services.AddOutboxRabbitMQPublisher(configuration);
+                services.AddOutboxService(configuration);
+                services.AddHostedService<HostedOutboxPublishingService>();
             });
 
         IHost host = hostBuilder.Build();
+        await host.RunAsync();
 
-        OutboxService outboxService = host.Services.GetRequiredService<OutboxService>();
-        await outboxService.ExecuteAsync();
+//        OutboxService outboxService = host.Services.GetRequiredService<OutboxService>();
+//        await outboxService.ExecuteAsync();
     }
 }
 

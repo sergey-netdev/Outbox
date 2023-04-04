@@ -12,8 +12,8 @@ public static class ConfigurationExtensions
         ArgumentNullException.ThrowIfNull(services, nameof(services));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
 
-        PublisherOptions options = new();
-        configuration.GetSection(PublisherOptions.DefaultSectionName).Bind(options);
+        OutboxPublisherOptions options = new();
+        configuration.GetSection(OutboxPublisherOptions.DefaultSectionName).Bind(options);
         services.AddSingleton(options);
 
         ConnectionFactory factory = new()
@@ -22,8 +22,14 @@ public static class ConfigurationExtensions
             Port = options.Port,
             UserName = options.UserName,
             Password = options.Password,
+            ContinuationTimeout = options.ContinuationTimeout,
+            HandshakeContinuationTimeout = options.HandshakeContinuationTimeout,
+            RequestedConnectionTimeout = options.RequestedConnectionTimeout,
+            RequestedHeartbeat = options.RequestedHeartbeat,
+            SocketReadTimeout = options.SocketReadTimeout,
+            SocketWriteTimeout = options.SocketWriteTimeout,
         };
         services.AddSingleton<IConnectionFactory>(factory);
-        services.AddSingleton<IPublisher, Publisher>();
+        services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
     }
 }

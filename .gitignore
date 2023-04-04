@@ -399,3 +399,4 @@ FodyWeavers.xsd
 
 /.docker/rabbitmq/data/*
 /.docker/rabbitmq/logs/*
+*.bkp

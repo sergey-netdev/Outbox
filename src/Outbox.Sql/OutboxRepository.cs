@@ -93,14 +93,14 @@ public class OutboxRepository : IOutboxRepository
         return keys;
     }
 
-    public async Task UpdateMessageAsSuccessfulAsync(long seqNum, bool move, CancellationToken cancellationToken = default)
+    public async Task UpdateMessageAsSuccessfulAsync(long seqNum, bool? move, CancellationToken cancellationToken = default)
     {
         using SqlConnection connection = new(_options.SqlConnectionString);
         await connection.OpenAsync(cancellationToken);
 
         using SqlCommand command = new(SQL.UpdateSuccessful, connection);
         command.Parameters.AddWithValue("@SeqNum", seqNum);
-        command.Parameters.AddWithValue("@Move", move);
+        command.Parameters.AddWithValue("@Move", move.HasValue ? move : DBNull.Value);
 
         await command.ExecuteScalarAsync(cancellationToken);
     }

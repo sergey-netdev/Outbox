@@ -1,24 +1,27 @@
 ﻿namespace Outbox.Tests;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Outbox.Core;
+using Outbox.Publisher.RabbitMQ;
 using Outbox.Service;
 using Outbox.Sql;
 
-public class OutboxServiceTests
+public class OutboxServiceTests : TestBase
 {
     private readonly OutboxService _service;
-    private readonly OutboxServiceOptions serviceOptions = new();
-    private readonly OutboxRepositoryOptions repositoryOptions = new();
+    private readonly IHost _host;
 
     public OutboxServiceTests()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
+        _host = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddOutboxSqlRepository(_configuration);
+                services.AddOutboxRabbitMQPublisher(_configuration);
+                services.AddOutboxService(_configuration);
+            })
             .Build();
-        configuration.GetSection(OutboxServiceOptions.DefaultSectionName).Bind(serviceOptions);
-        configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Bind(repositoryOptions);
 
-        var repository = new OutboxRepository(repositoryOptions);
-        _service = new OutboxService(serviceOptions, repository, NullLogger<OutboxService>.Instance);
+        _service = (OutboxService)_host.Services.GetRequiredService<IOutboxService>();
     }
 }
