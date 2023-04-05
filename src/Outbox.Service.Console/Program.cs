@@ -2,11 +2,11 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting; // Requires NuGet package
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Outbox.Core;
 using Outbox.Publisher.RabbitMQ;
 using Outbox.Sql;
+using System.Text.Json;
 
 class Program
 {
@@ -24,19 +24,24 @@ class Program
                 configurationBuilder.Sources.Clear();
                 configurationBuilder.AddConfiguration(configuration);
             })
+            .ConfigureLogging(builder =>
+                builder.AddSimpleConsole(options =>
+                {
+                    options.IncludeScopes = false;
+                    options.TimestampFormat = "HH:mm:ss ";
+                }))
             .ConfigureServices(services =>
             {
                 services.AddOutboxSqlRepository(configuration);
                 services.AddOutboxRabbitMQPublisher(configuration);
                 services.AddOutboxService(configuration);
+
                 services.AddHostedService<HostedOutboxPublishingService>();
+                services.AddHostedService<HostedOutboxUnlockingService>();
             });
 
         IHost host = hostBuilder.Build();
         await host.RunAsync();
-
-//        OutboxService outboxService = host.Services.GetRequiredService<OutboxService>();
-//        await outboxService.ExecuteAsync();
     }
 }
 

@@ -1,17 +1,18 @@
 ﻿namespace Outbox.Service.Console;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Outbox.Core;
 
-public class HostedOutboxPublishingService : BackgroundService
+public class HostedOutboxPublishingService : HostedOutboxServiceBase
 {
     private readonly IOutboxService _outboxService;
 
-    public HostedOutboxPublishingService(IOutboxService outboxService)
+    public HostedOutboxPublishingService(
+        IOutboxService outboxService,
+        ILogger<HostedOutboxPublishingService> logger)
+        : base(outboxService.PublishAsync, outboxService.Options.QueryBatchSize, outboxService.Options.ProcessingInterval, logger)
     {
-        _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
+        _outboxService = outboxService;
     }
-
-    protected override Task ExecuteAsync(CancellationToken stoppingToken) => _outboxService.RunAsync(stoppingToken);
 
     public override void Dispose()
     {

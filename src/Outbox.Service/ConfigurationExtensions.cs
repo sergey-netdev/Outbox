@@ -12,8 +12,8 @@ public static class ConfigurationExtensions
 
         OutboxServiceOptions options = new();
         configuration.GetSection(OutboxServiceOptions.DefaultSectionName).Bind(options);
-        services.AddSingleton(options);
+        services.AddSingleton<IOutboxServiceOptions>(options);
 
-        services.AddSingleton<IOutboxService, OutboxService>();
+        services.AddTransient<IOutboxService, OutboxService>();
     }
 }

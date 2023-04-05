@@ -5,13 +5,13 @@ using Outbox.Core;
 
 public class OutboxService : IOutboxService
 {
-    private readonly OutboxServiceOptions _outboxServiceOptions;
+    private readonly IOutboxServiceOptions _outboxServiceOptions;
     private readonly IOutboxRepository _outboxRepository;
     private readonly IOutboxPublisher _publisher;
     private readonly ILogger _logger;
 
     public OutboxService(
-        OutboxServiceOptions outboxServiceOptions,
+        IOutboxServiceOptions outboxServiceOptions,
         IOutboxRepository outboxRepository,
         IOutboxPublisher publisher,
         ILogger<OutboxService> logger)
@@ -22,39 +22,28 @@ public class OutboxService : IOutboxService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public IOutboxServiceOptions Options => _outboxServiceOptions;
+
+    ////public Task PublishAsync(CancellationToken cancellationToken = default)
+    ////{
+    ////    return OutboxServiceBase.RunAsync(_logger, _outboxServiceOptions.QueryBatchSize, _outboxServiceOptions.ProcessingInterval,
+    ////        TryQueryAndPublishMessagesAsync, cancellationToken);
+    ////}
+
+    ////public Task UnlockAsync(CancellationToken cancellationToken = default)
+    ////{
+    ////    return OutboxServiceBase.RunAsync(_logger, _outboxServiceOptions.UnlockBatchSize, _outboxServiceOptions.UnlockInterval,
+    ////        TryQueryAndPublishMessagesAsync, cancellationToken);
+    ////}
+
+    public Task<int> UnlockAsync(int batchSize, CancellationToken cancellationToken = default)
     {
-        return RunAsync(cancellationToken);
+        return _outboxRepository.UnlockAsync(batchSize, cancellationToken);
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken = default)
+    public async Task<int> PublishAsync(int batchSize, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Entering the main loop.");
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            int messageCount = int.MaxValue;
-            try
-            {
-                messageCount = await this.TryQueryAndPublishMessagesAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex!, string.Empty);
-            }
-
-            if (messageCount < _outboxServiceOptions.QueryBatchSize)
-            {
-                // sleep, if we got less messages than requested, otherwise immediately process the next batch
-                _logger.LogTrace("Sleeping...");
-                await Task.Delay(_outboxServiceOptions.ProcessingInterval, cancellationToken);
-            }
-        }
-    }
-
-    private async Task<int> TryQueryAndPublishMessagesAsync(CancellationToken cancellationToken)
-    {
-        IReadOnlyCollection<IOutboxMessageRow> batch = await _outboxRepository.LockAndGetNextBatchAsync(_outboxServiceOptions.QueryBatchSize, cancellationToken);
+        IReadOnlyCollection<IOutboxMessageRow> batch = await _outboxRepository.LockAndGetNextBatchAsync(batchSize, cancellationToken);
         _logger.LogInformation("Got {messageCount} messages", batch.Count);
 
         foreach (var message in batch)
@@ -78,12 +67,11 @@ public class OutboxService : IOutboxService
                 case MessageProcessingBehavior.Move:
                     await _outboxRepository.UpdateMessageAsSuccessfulAsync(message.SeqNum, move: true, cancellationToken);
                     break;
-                case MessageProcessingBehavior.None:
-                    break;
+                ////case MessageProcessingBehavior.None:
+                ////    break;
                 default:
                     throw new NotImplementedException($"Unknown {nameof(MessageProcessingBehavior)}: {_outboxServiceOptions.ProcessingBehavior}.");
             }
-
         }
 
         return batch.Count;

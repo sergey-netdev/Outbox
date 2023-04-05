@@ -1,17 +1,11 @@
-﻿namespace Outbox.Service;
+﻿namespace Outbox.Core;
 
 /// <summary>
-/// Defines behavior of messages after successful processing
-/// or when reaching <see cref="OutboxRepositoryOptions.MaxRetryCount"/>.
+/// Defines behavior of messages after successful processing.
+/// Note, if a message reaches the maximum retry count it's always moved.
 /// </summary>
 public enum MessageProcessingBehavior : byte
 {
-    /// <summary>
-    /// Do nothing. A message stays in <c>Outbox</c> table.
-    /// Not recommended for production use.
-    /// </summary>
-    None = 0,
-
     /// <summary>
     /// A message is deleted from <c>Outbox</c> table.
     /// </summary>

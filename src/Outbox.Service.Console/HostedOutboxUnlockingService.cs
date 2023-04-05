@@ -1,17 +1,18 @@
 ﻿namespace Outbox.Service.Console;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Outbox.Core;
 
-public class HostedOutboxUnlockingService : BackgroundService
+public class HostedOutboxUnlockingService : HostedOutboxServiceBase
 {
     private readonly IOutboxService _outboxService;
 
-    public HostedOutboxUnlockingService(IOutboxService outboxService)
+    public HostedOutboxUnlockingService(
+        IOutboxService outboxService,
+        ILogger<HostedOutboxUnlockingService> logger)
+        : base(outboxService.UnlockAsync, outboxService.Options.UnlockBatchSize, outboxService.Options.UnlockInterval, logger)
     {
-        _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
+        _outboxService = outboxService;
     }
-
-    protected override Task ExecuteAsync(CancellationToken stoppingToken) => _outboxService.RunAsync(stoppingToken);
 
     public override void Dispose()
     {

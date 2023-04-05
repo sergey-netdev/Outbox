@@ -5,7 +5,6 @@ using global::RabbitMQ.Client.Events;
 using global::RabbitMQ.Client.Exceptions;
 using Outbox.Core;
 using System.Diagnostics;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 public class OutboxPublisher : IOutboxPublisher, IDisposable
@@ -80,10 +79,10 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
             throw deliveryException;
         }
 
-        if (!confirmed)
-        {
-            throw new DeliveryException($"Message '{message.MessageId}' could not be confirmed.");
-        }
+        ////if (!confirmed)
+        ////{
+        ////    throw new DeliveryException($"Message '{message.MessageId}' could not be confirmed.");
+        ////}
 
         return Task.CompletedTask;
     }

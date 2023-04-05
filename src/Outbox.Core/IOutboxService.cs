@@ -2,5 +2,9 @@
 
 public interface IOutboxService : IDisposable
 {
-    Task RunAsync(CancellationToken cancellationToken = default);
+    IOutboxServiceOptions Options { get; }
+
+    Task<int> PublishAsync(int batchSize, CancellationToken cancellationToken = default);
+
+    Task<int> UnlockAsync(int batchSize, CancellationToken cancellationToken = default);
 }
