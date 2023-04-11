@@ -1,0 +1,1 @@
+# this file is required, otherwise RabbitMQ fails to start for the first time when cloning a repo
