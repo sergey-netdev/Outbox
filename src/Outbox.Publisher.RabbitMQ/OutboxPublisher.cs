@@ -41,15 +41,11 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
         DeliveryException? deliveryException = null;
         bool acked = false, nacked = false, confirmed = false;
 
-        Stopwatch sw = new Stopwatch();
-        Stopwatch sw1 = new Stopwatch();
-        sw.Start();
         try
         {
             //cancellationToken.ThrowIfCancellationRequested();
             using IModel channel = this.Connection.CreateModel();
             //cancellationToken.ThrowIfCancellationRequested();
-            sw1.Start();
             channel.BasicAcks += (sender, args) =>
                 acked = true;
             channel.BasicNacks += (sender, args) =>
@@ -63,14 +59,10 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
         }
         catch (BrokerUnreachableException ex)
         {
-            sw.Stop();
-            sw1.Stop();
            throw new TimeoutException(TimeoutException.CannotConnectMessage, ex);
         }
         catch (Exception ex)
         {
-            sw.Stop();
-            sw1.Stop();
             throw new RepositoryException("Generic broker error.", ex);
         }
 

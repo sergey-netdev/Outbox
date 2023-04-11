@@ -13,7 +13,7 @@ using TimeoutException = Outbox.Publisher.RabbitMQ.TimeoutException;
 public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
 {
     public const int MaxMessageSize = 1024; // see ./.docker/rabbitmq/etc/rabbitmq.conf
-    public const int RabbitToxicPort = 17000; // see docker-compose.yml
+    public const string RabbitToxicPort = "17000"; // see docker-compose.yml, adds 500ms latency to any data
     private OutboxPublisher? _publisher;
     private IHost? _host;
     private readonly CancellationTokenSource _readCts = new(TimeSpan.FromMilliseconds(300));
@@ -53,11 +53,11 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
     public async Task PublishAsync_Throws_DeliveryException_When_Topic_Is_Invalid()
     {
         // setup
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
+        this.Setup();
         OutboxMessage message = GenerateRndMessage(topic: "invalid.topic");
 
         // act
-        DeliveryException ex = await Assert.ThrowsAsync<DeliveryException>(() => _publisher.PublishAsync(message));
+        DeliveryException ex = await Assert.ThrowsAsync<DeliveryException>(() => _publisher!.PublishAsync(message));
 
         // verify
         Assert.Equal("NO_ROUTE", ex.Message);
@@ -69,13 +69,11 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
     public async Task PublishAsync_Throws_TimeoutException_When_Exceeding_ConnectTimeout()
     {
         // setup
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
-
-        ConnectionFactory connectionFactory = (ConnectionFactory)_host.Services.GetService<IConnectionFactory>()!;
-        connectionFactory.RequestedConnectionTimeout = TimeSpan.FromMicroseconds(1);
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>(); // re-resolve so the new timeout is applied
-        _publisher.Options.PublishTimeout = connectionFactory.RequestedConnectionTimeout * 10;
-
+        Dictionary<string, string?> configurationOverrides = new()
+        {
+            { $"{OutboxPublisherOptions.DefaultSectionName}:PublishTimeout", "00:10:00" }
+        };
+        this.Setup(configurationOverrides);
         OutboxMessage message = GenerateRndMessage();
 
         // act
@@ -90,17 +88,22 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
     public async Task PublishAsync_Throws_TimeoutException_When_Exceeding_PublishTimeout()
     {
         // setup
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
-
-        ConnectionFactory connectionFactory = (ConnectionFactory)_host.Services.GetService<IConnectionFactory>()!;
-        connectionFactory.Port = RabbitToxicPort; // adds 500ms latency to any data
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>(); // re-resolve so the new timeout is applied
-        //_publisher.Options.PublishTimeout = TimeSpan.FromMilliseconds(99);
-
+        Dictionary<string, string?> configurationOverrides = new()
+        {
+            { $"{OutboxPublisherOptions.DefaultSectionName}:Port", RabbitToxicPort }
+        };
+        this.Setup(configurationOverrides);
         OutboxMessage message = GenerateRndMessage();
 
+        ////_publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
+
+        ////ConnectionFactory connectionFactory = (ConnectionFactory)_host.Services.GetService<IConnectionFactory>()!;
+        ////connectionFactory.Port = RabbitToxicPort; 
+        ////_publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>(); // re-resolve so the new timeout is applied
+        //////_publisher.Options.PublishTimeout = TimeSpan.FromMilliseconds(99);
+
         // act
-        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher.PublishAsync(message));
+        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher!.PublishAsync(message));
 
         // verify
         Assert.Equal(TimeoutException.CannotConnectMessage, ex.Message);
@@ -111,11 +114,11 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
     public async Task PublishAsync_Sends_A_Message_To_Specified_Topic()
     {
         // setup
-        _publisher = (OutboxPublisher)_host.Services.GetRequiredService<IOutboxPublisher>();
+        this.Setup();
         OutboxMessage message = GenerateRndMessage(); // rnd topic generated
 
         // act
-        await _publisher.PublishAsync(message);
+        await _publisher!.PublishAsync(message);
 
         // verify
         IOutboxMessageBase? receivedMessage = await PullMessageAsync(message.Topic);
