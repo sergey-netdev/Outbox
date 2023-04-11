@@ -16,9 +16,9 @@ public class OutboxServiceTests : TestBase
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
-                services.AddOutboxSqlRepository(_configuration);
-                services.AddOutboxRabbitMQPublisher(_configuration);
-                services.AddOutboxService(_configuration);
+                services.AddOutboxSqlRepository();
+                services.AddOutboxRabbitMQPublisher();
+                services.AddOutboxService();
             })
             .Build();
 

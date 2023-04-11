@@ -21,7 +21,7 @@ public partial class OutboxRepositoryTests : TestBase, IAsyncLifetime
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
-                services.AddOutboxSqlRepository(_configuration);
+                services.AddOutboxSqlRepository();
             })
             .Build();
 

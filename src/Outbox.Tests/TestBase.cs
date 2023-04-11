@@ -1,6 +1,8 @@
 ﻿namespace Outbox.Tests;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Outbox.Core;
 using Outbox.Sql;
 using System.Text;
@@ -12,13 +14,24 @@ public partial class TestBase
     public const string TopicA = "outbox.test.topicA";
     public const string TopicB = "outbox.test.topicB";
     public static readonly IReadOnlySet<string> Topics = new HashSet<string>(new[] { TopicA, TopicB });
-    protected readonly IConfiguration _configuration;
 
-    public TestBase()
+    protected virtual IHostBuilder Setup(Dictionary<string, string?>? configurationOverrides = null)
     {
-        _configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
-            .Build();
+        ConfigurationBuilder configurationBuilder = new();
+        configurationBuilder.AddJsonFile("appsettings.json");
+        if (configurationOverrides != null)
+        {
+            configurationBuilder.AddInMemoryCollection(configurationOverrides);
+        }
+        IConfiguration configuration = configurationBuilder.Build();
+        
+        IHostBuilder hostBuilder = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
+            });
+
+        return hostBuilder;
     }
 
     protected static IEnumerable<OutboxMessage> GenerateRndMessages(int batchSize, string? topic = null)

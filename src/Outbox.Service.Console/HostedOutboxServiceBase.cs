@@ -24,14 +24,14 @@ public abstract class HostedOutboxServiceBase : BackgroundService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
             int messageCount = int.MaxValue;
             try
             {
-                messageCount = await _processDelegate(_batchSize, stoppingToken);
+                messageCount = await _processDelegate(_batchSize, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -43,8 +43,8 @@ public abstract class HostedOutboxServiceBase : BackgroundService
             if (messageCount < _batchSize)
             {
                 // sleep, if we got less messages than requested, otherwise immediately process the next batch
-                _logger.LogTrace("Sleeping...");
-                await Task.Delay(_sleepInterval, stoppingToken);
+                _logger.LogTrace("Sleeping for {sleepInterval}...", _sleepInterval);
+                await Task.Delay(_sleepInterval, cancellationToken);
             }
         }
     }

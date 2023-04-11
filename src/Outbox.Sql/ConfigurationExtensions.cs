@@ -3,17 +3,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Outbox.Core;
 using Outbox.Sql;
+using System;
 
 public static class ConfigurationExtensions
 {
-    public static void AddOutboxSqlRepository(this IServiceCollection services, IConfiguration configuration)
+    public static void AddOutboxSqlRepository(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services, nameof(services));
-        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
 
-        OutboxRepositoryOptions options = new();
-        configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Bind(options);
-        services.AddSingleton(options);
+        services.AddSingleton(serviceProvider =>
+        {
+            IConfiguration configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            OutboxRepositoryOptions options = new();
+            configuration.GetSection(OutboxRepositoryOptions.DefaultSectionName).Bind(options);
+            return options;
+        });
 
         services.AddSingleton<IOutboxRepository, OutboxRepository>();
     }
