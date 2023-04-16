@@ -18,7 +18,7 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
     {
         _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
-        _connection = new(() => _connectionFactory.CreateConnection(), true);
+        _connection = new(CreateConnection, true);
     }
 
     internal OutboxPublisherOptions Options => _options;
@@ -34,6 +34,12 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
         }
 
         return this.PublishAsyncInternal(message);
+    }
+
+    private IConnection CreateConnection()
+    {
+        IConnection connection = _connectionFactory.CreateConnection();
+        return connection;
     }
 
     private Task PublishAsyncInternal(IOutboxMessage message, CancellationToken cancellationToken = default)
@@ -53,7 +59,7 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
             channel.BasicReturn += (sender, args) => deliveryException = new DeliveryException(args.ReplyText) { RoutingKey = args.RoutingKey, ReplyCode = args.ReplyCode };
             channel.ConfirmSelect();
             //////cancellationToken.ThrowIfCancellationRequested();
-            ////channel.BasicPublish(_options.Exchange, routingKey: message.Topic, basicProperties: null, mandatory: true, body: message.Payload);
+            channel.BasicPublish(_options.Exchange, routingKey: message.Topic, basicProperties: null, mandatory: true, body: message.Payload);
 
             channel.WaitForConfirmsOrDie(_options.PublishTimeout);
         }
@@ -77,6 +83,13 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
         ////}
 
         return Task.CompletedTask;
+    }
+
+    internal Task<int> PurgeAsync(string queueName)
+    {
+        using IModel channel = this.Connection.CreateModel();
+        uint result = channel.QueuePurge(queueName);
+        return Task.FromResult((int)result);
     }
 
     internal Task<byte[]?> ReadMessageAsync(string queueName)

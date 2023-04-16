@@ -32,9 +32,9 @@ class Program
                 }))
             .ConfigureServices(services =>
             {
-                services.AddOutboxSqlRepository(configuration);
-                services.AddOutboxRabbitMQPublisher(configuration);
-                services.AddOutboxService(configuration);
+                services.AddOutboxSqlRepository();
+                services.AddOutboxRabbitMQPublisher();
+                services.AddOutboxService();
 
                 services.AddHostedService<HostedOutboxPublishingService>();
                 services.AddHostedService<HostedOutboxUnlockingService>();

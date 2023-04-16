@@ -1,9 +1,10 @@
-﻿namespace Outbox.Tests;
+﻿namespace Outbox.Publisher.RabbitMQ.Tests;
+
+using global::RabbitMQ.Client.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Outbox.Core;
 using Outbox.Publisher.RabbitMQ;
-using RabbitMQ.Client.Exceptions;
 using System;
 using System.Net.NetworkInformation;
 using TimeoutException = Outbox.Publisher.RabbitMQ.TimeoutException;
