@@ -4,20 +4,20 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System.Threading;
 
-public class ConnectionFactoryWrapperTests
+public class TimeConstrainedFactoryTests
 {
     private const int TimeoutInMilliseconds = 350;
     private readonly TimeSpan _timeout = TimeSpan.FromMilliseconds(TimeoutInMilliseconds);
     private readonly TimeSpan _disposeVerifyTime = TimeSpan.FromMilliseconds(TimeoutInMilliseconds * 1.5); // to compensate Task/ThreadPool/Debugger/xUnit overhead; cannot be predicted, depends on Debug/Release, CPU load, etc.
 
-    private readonly Mock<ILogger<ConnectionFactoryWrapper>> _mockLogger = new();
+    private readonly Mock<ILogger<TimeConstrainedFactory<IConnection>>> _mockLogger = new();
     private readonly Mock<IConnection> _mockConnection = new();
     private readonly Mock<IConnectionFactory> _mockConnectionFactory = new();
-    private readonly ConnectionFactoryWrapper _wrapper;
+    private readonly TimeConstrainedFactory<IConnection> _factory;
 
-    public ConnectionFactoryWrapperTests()
+    public TimeConstrainedFactoryTests()
     {
-        _wrapper = new(_mockConnectionFactory.Object, _mockLogger.Object);
+        _factory = new(_mockConnectionFactory.Object.CreateConnection, _mockLogger.Object);
     }
 
     [Theory]
@@ -30,9 +30,11 @@ public class ConnectionFactoryWrapperTests
 
         // act
         TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(
-            () => _wrapper.CreateConnectionAsync(_timeout));
+            () => _factory.CreateAsync(_timeout));
 
         // verify
+        _mockConnectionFactory.Verify(p => p.CreateConnection(), Times.Once);
+
         string expectedMessage = string.Format(TimeoutException.IntervalExceededMessage, _timeout);
         Assert.Equal(expectedMessage, ex.Message);
 
@@ -49,9 +51,10 @@ public class ConnectionFactoryWrapperTests
         Setup(createTime);
 
         // act
-        IConnection connection = await _wrapper.CreateConnectionAsync(_timeout);
+        IConnection connection = await _factory.CreateAsync(_timeout);
 
         // verify
+        _mockConnectionFactory.Verify(p => p.CreateConnection(), Times.Once);
         Assert.Equal(_mockConnection.Object, connection);
 
         await Task.Delay(_disposeVerifyTime);
@@ -67,9 +70,10 @@ public class ConnectionFactoryWrapperTests
 
         // act
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _wrapper.CreateConnectionAsync(_timeout));
+            () => _factory.CreateAsync(_timeout));
 
         // verify
+        _mockConnectionFactory.Verify(p => p.CreateConnection(), Times.Once);
         Assert.Equal(expectedException, ex);
 
         await Task.Delay(_disposeVerifyTime);
