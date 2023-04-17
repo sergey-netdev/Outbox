@@ -16,7 +16,6 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
     public const string RabbitToxicPort = "17000"; // see docker-compose.yml, adds 500ms latency to any data
     private OutboxPublisher? _publisher;
     private IHost? _host;
-    private readonly CancellationTokenSource _readCts = new(TimeSpan.FromMilliseconds(300));
 
     private new void Setup(Dictionary<string, string?>? configurationOverrides = null)
     {
@@ -81,7 +80,7 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
         OutboxMessage message = GenerateRndMessage();
 
         // act
-        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher.PublishAsync(message));
+        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher!.PublishAsync(message));
 
         // verify
         Assert.Equal(TimeoutException.CannotConnectMessage, ex.Message);

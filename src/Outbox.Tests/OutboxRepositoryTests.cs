@@ -14,7 +14,6 @@ public partial class OutboxRepositoryTests : TestBase, IAsyncLifetime
     const int UnlockBatchSize = 10;
     private readonly IHost _host;
     private readonly OutboxRepository _repository;
-    private readonly OutboxRepositoryOptions options = new();
 
     public OutboxRepositoryTests()
     {

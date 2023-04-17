@@ -80,7 +80,7 @@ public class OutboxPublisherRabbitMQTests : TestBase, IDisposable
         OutboxMessage message = GenerateRndMessage();
 
         // act
-        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher.PublishAsync(message));
+        TimeoutException ex = await Assert.ThrowsAsync<TimeoutException>(() => _publisher!.PublishAsync(message));
 
         // verify
         Assert.Equal(TimeoutException.CannotConnectMessage, ex.Message);

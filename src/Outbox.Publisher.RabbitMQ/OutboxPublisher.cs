@@ -33,7 +33,7 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
             throw new ObjectDisposedException(null);
         }
 
-        return this.PublishAsyncInternal(message);
+        return this.PublishInternalAsync(message);
     }
 
     private IConnection CreateConnection()
@@ -42,7 +42,7 @@ public class OutboxPublisher : IOutboxPublisher, IDisposable
         return connection;
     }
 
-    private Task PublishAsyncInternal(IOutboxMessage message, CancellationToken cancellationToken = default)
+    private Task PublishInternalAsync(IOutboxMessage message)
     {
         DeliveryException? deliveryException = null;
         bool acked = false, nacked = false, confirmed = false;

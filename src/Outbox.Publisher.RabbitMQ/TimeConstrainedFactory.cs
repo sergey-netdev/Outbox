@@ -19,7 +19,8 @@ public class TimeConstrainedFactory<T>
 
     public async Task<T> CreateAsync(TimeSpan timeout)
     {
-        Task<T> backgroundTask = Task.Factory.StartNew(_factoryMethod);
+        Task<T> backgroundTask = Task.Factory.StartNew(
+            _factoryMethod, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Default);
 
         try
         {
@@ -28,13 +29,12 @@ public class TimeConstrainedFactory<T>
         }
         catch (System.TimeoutException ex)
         {
-            // add a continuation to cleanup if it runs to comppletion
-            // and DO NOT await it
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            backgroundTask
-                .ContinueWith(t => { Cleanup(t.Result); }, TaskContinuationOptions.OnlyOnRanToCompletion)
+            // add a continuation to cleanup if it runs to comppletion and DO NOT await it
+//#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            _ = backgroundTask
+                .ContinueWith(t => { Cleanup(t.Result); }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current)
                 .ConfigureAwait(false);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+//#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
             throw new TimeoutException(string.Format(TimeoutException.IntervalExceededMessage, timeout), ex);
         }
@@ -50,7 +50,7 @@ public class TimeConstrainedFactory<T>
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot dispose object."); // all we can do
+                _logger.LogError(ex, "Cannot dispose object.");
             }
         }
     }
