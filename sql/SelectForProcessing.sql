@@ -78,7 +78,8 @@ insert into dbo.Outbox (
 values (
     CAST(NEWID() as varchar(36)),
     'TestMessageType',
-    'TestTopic',
+    case CRYPT_GEN_RANDOM(1) % 2 when 0 then 'outbox.test.topicA' else 'outbox.test.topicB' end,
+--    'outbox.test.topicA',
     null,
     CONVERT(varbinary(300), '{ "body": "stupid json" }')
 );
